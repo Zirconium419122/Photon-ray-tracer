@@ -95,25 +95,30 @@ class RayUtils {
   }
 
   static RandomDirection(state) {
-    for (let limit = 0; limit < 1000; limit++) {
+    for (let limit = 0; limit < 100; limit++) {
       const x = this.RandomValue(state) * 2 - 1;
-      const y = this.RandomValue(state) * 2 - 1;
-      const z = this.RandomValue(state) * 2 - 1;
+      const y = this.RandomValue(state += 13146368) * 2 - 1;
+      const z = this.RandomValue(state += 23652568) * 2 - 1;
 
       const pointInCube = new Vector(x, y, z);
       const sqrDstFromCenter = pointInCube.dot(pointInCube);
 
-      // If point is inside sphere, scale it to lie on the surface (otherwise, keep trying)
       if (sqrDstFromCenter <= 1) {
-        return pointInCube / Math.sqrt(sqrDstFromCenter);
+        console.log(pointInCube.divide(Math.sqrt(sqrDstFromCenter)));
+        return pointInCube.divide(Math.sqrt(sqrDstFromCenter));
       }
     }
+
     return 0;
   }
 
   static RandomHemisphereDirection(normal, state) {
     const direction = this.RandomDirection(state);
-    return direction * Math.sign(normal.dot(direction));
+    console.log(direction);
+    console.log(normal.dot(direction));
+    console.log(Math.sign(normal.dot(direction)));
+    console.log(direction.multiply(Math.sign(normal.dot(direction))));
+    return direction.multiply(Math.sign(normal.dot(direction)));
   }
 }
 
@@ -144,7 +149,7 @@ class Ray {
 
   // Metod to calculate the color by tracing the ray
   trace(state) {
-    console.log(`Tracing ray with direction: ${JSON.stringify(this.direction)}`);
+    // console.log(`Tracing ray with direction: ${JSON.stringify(this.direction)}`);
     let closestIntersection = null;
     let incomingLight = new Vector(0, 0, 0);
     let rayColor = new Vector(255, 255, 255);
@@ -165,33 +170,23 @@ class Ray {
         }
       }
 
+      // console.log(this.direction);
+
       if (closestIntersection) {
         const intersectionPoint = closestIntersection.intersectionPoint;
         const object = closestIntersection.intersectionObject;
 
-        // Get the material color at the intersection point
-        let color = object.getColorAtPoint(intersectionPoint, this);
-
         // Get the normal on the object
         const normal = object.calculateNormal(intersectionPoint);
-
-        // If the material is diffusively reflective, calculate the color of the reflected ray
-        if (object.material.reflectionCoeff == 0) {
-            const reflectedRayDirection = RayUtils.RandomHemisphereDirection(normal, state);
-            const reflectedRay = new Ray(intersectionPoint, reflectedRayDirection);
-            const reflectedColor = reflectedRay.trace(state);
-
-            // Combine the reflected color with the material color
-            color = color.add(reflectedColor.dot(object.material.reflectionCoeff));
-        }
 
         // Update the origin and direction of the ray for the next iteration
         this.origin = intersectionPoint;
         this.direction = RayUtils.RandomHemisphereDirection(normal, state);
 
         // Calculate the incoming light
-        let material = object.material;
-        let emittedLight = new Vector(material.emittedColor.multiply(material.lightStrength));
+        const material = object.material;
+        const emittedLight = new Vector(material.emittedColor.multiply(material.lightStrength));
+        // console.log(emittedLight);
         incomingLight = incomingLight.add(emittedLight.dot(rayColor));
         rayColor = rayColor.dot(material.color);
       }
@@ -223,9 +218,11 @@ class Sphere {
   // Method to test if a ray intersects with the sphere
   intersect(ray) {
     const oc = ray.origin.subtract(this.center);
+    // console.log(ray.direction);
+    // console.log(typeof ray.direction);
+    // console.log(ray.direction.dot);
+    // console.log(ray.direction instanceof Vector);
     const a = ray.direction.dot(ray.direction);
-    console.log(ray.direction);
-    console.log(typeof ray.direction);
     const b = oc.dot(ray.direction) * 2;
     const c = oc.dot(oc) - this.radius * this.radius;
     const discriminant = b * b - 4 * a * c;
@@ -395,6 +392,8 @@ const sphereMaterial = new Material(
   1
 );
 const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial)
+
+console.log(sphere);
 
 // Example usage
 const sphereCenter1 = new Vector(0, 0, -5);
