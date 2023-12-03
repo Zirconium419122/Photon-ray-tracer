@@ -5,8 +5,8 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 // Set the width and height of the canvas
-canvas.width = 1280;  // Replace 800 with your desired width
-canvas.height = 720; // Replace 600 with your desired height
+canvas.width = 800;  // Replace 800 with your desired width
+canvas.height = 600; // Replace 600 with your desired height
 
 
 
@@ -103,11 +103,8 @@ class RayUtils {
       const pointInCube = new Vector(x, y, z);
       const sqrDstFromCenter = pointInCube.dot(pointInCube);
 
-      //console.log(pointInCube);
-
       // If point is inside sphere, scale it to lie on the surface (otherwise, keep trying)
       if (sqrDstFromCenter <= 1) {
-        console.log(pointInCube.divide(Math.sqrt(sqrDstFromCenter)));
         return pointInCube.divide(Math.sqrt(sqrDstFromCenter));
       }
     }
@@ -117,10 +114,6 @@ class RayUtils {
 
   static RandomHemisphereDirection(normal, state) {
     const direction = this.RandomDirection(state);
-    console.log(direction);
-    console.log(normal.dot(direction));
-    console.log(Math.sign(normal.dot(direction)));
-    console.log(direction.multiply(Math.sign(normal.dot(direction))));
     return direction.multiply(Math.sign(normal.dot(direction)));
   }
 }
@@ -147,7 +140,6 @@ class Ray {
   constructor(origin, direction) {
     this.origin = origin;       // Vector representing the ray's origin
     this.direction = direction; // Vector representing the ray's direction
-    console.log(`Tracing ray with direction: ${JSON.stringify(this.direction)}`);
   }
 
   // Metod to calculate the color by tracing the ray
@@ -155,7 +147,8 @@ class Ray {
     // console.log(`Tracing ray with direction: ${JSON.stringify(this.direction)}`);
     let closestIntersection = null;
     let incomingLight = new Vector(0, 0, 0);
-    let rayColor = new Vector(255, 255, 255);
+    let rayColor = new Vector(1, 1, 1);
+    // console.log(state);
 
     // Recursivly reflect the ray
     for (let i = 0; i < maxReflectionDepth; i++) {
@@ -173,7 +166,7 @@ class Ray {
         }
       }
 
-      // console.log(this.direction);
+      console.log(closestIntersection);
 
       if (closestIntersection) {
         const intersectionPoint = closestIntersection.intersectionPoint;
@@ -188,13 +181,20 @@ class Ray {
 
         // Calculate the incoming light
         const material = object.material;
-        const emittedLight = new Vector(material.emittedColor.multiply(material.lightStrength));
-        // console.log(emittedLight);
-        incomingLight = incomingLight.add(emittedLight.dot(rayColor));
-        rayColor = rayColor.dot(material.color);
+        const emittedLight = material.emittedColor.multiply(material.lightStrength);
+        console.log('Before:', incomingLight, emittedLight, rayColor);
+        incomingLight = incomingLight.add(
+          new Vector(
+          emittedLight.x * rayColor.x,
+          emittedLight.y * rayColor.y,
+          emittedLight.z * rayColor.z
+        ));
+        console.log('After:', incomingLight);
+        rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
       }
     }
 
+    console.log(incomingLight);
     return incomingLight;
   }
 
@@ -221,10 +221,6 @@ class Sphere {
   // Method to test if a ray intersects with the sphere
   intersect(ray) {
     const oc = ray.origin.subtract(this.center);
-    // console.log(ray.direction);
-    // console.log(typeof ray.direction);
-    // console.log(ray.direction.dot);
-    // console.log(ray.direction instanceof Vector);
     const a = ray.direction.dot(ray.direction);
     const b = oc.dot(ray.direction) * 2;
     const c = oc.dot(oc) - this.radius * this.radius;
@@ -369,11 +365,11 @@ class Scene {
         const state = 167435766 + (x ^ (4 + 3472364)) + (y ^ (3 + 1293423));
 
         // Trace the ray to get the color
-        const color = ray.trace(0, state);
+        const color = ray.trace(state);
 
         // Draw the pixel with the calculated color
         ctx.fillStyle =
-          'rgb(' + color.x + ', ' + color.y + ', ' + color.z + ')';
+          'rgb(' + color.x * 255 + ', ' + color.y * 255 + ', ' + color.z * 255 + ')';
         ctx.fillRect(x, y, 1, 1);
       }
     }
@@ -391,7 +387,7 @@ const sphereRadius = 1;
 const sphereMaterial = new Material(
   new Vector(0, 0, 0),
   0,
-  new Vector(255, 255, 255),
+  new Vector(1, 1, 1),
   1
 );
 const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial)
@@ -401,21 +397,21 @@ console.log(sphere);
 // Example usage
 const sphereCenter1 = new Vector(0, 0, -5);
 const sphereRadius1 = 1;
-const sphereMaterial1 = new Material(new Vector(255, 0, 0));
+const sphereMaterial1 = new Material(new Vector(1, 0, 0));
 const sphere1 = new Sphere(sphereCenter1, sphereRadius1, sphereMaterial1);
 
 console.log(sphere1);
 
 const sphereCenter2 = new Vector(3, 1, -7);
 const sphereRadius2 = 1;
-const sphereMaterial2 = new Material(new Vector(0, 255, 0));
+const sphereMaterial2 = new Material(new Vector(0, 1, 0));
 const sphere2 = new Sphere(sphereCenter2, sphereRadius2, sphereMaterial2);
 
 console.log(sphere2);
 
 const cubeCenter = new Vector(-2, 1, -5);
 const cubeSize = new Vector(1, 1, 1);
-const cubeMaterial = new Material(new Vector(0, 0, 255));
+const cubeMaterial = new Material(new Vector(0, 0, 1));
 const cube = new Cube(cubeCenter, cubeSize, cubeMaterial);
 
 console.log(cube);
