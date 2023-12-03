@@ -103,6 +103,9 @@ class RayUtils {
       const pointInCube = new Vector(x, y, z);
       const sqrDstFromCenter = pointInCube.dot(pointInCube);
 
+      //console.log(pointInCube);
+
+      // If point is inside sphere, scale it to lie on the surface (otherwise, keep trying)
       if (sqrDstFromCenter <= 1) {
         console.log(pointInCube.divide(Math.sqrt(sqrDstFromCenter)));
         return pointInCube.divide(Math.sqrt(sqrDstFromCenter));
