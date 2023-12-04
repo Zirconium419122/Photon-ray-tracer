@@ -143,50 +143,62 @@ class Ray {
   }
 
   // Metod to calculate the color by tracing the ray
-  trace(state) {
-    let closestIntersection = null;
+  trace(state, x, y) {
+    /*// Create seed for random number generator
+    const numPixels = canvas.width * canvas.height;
+    const pixelCoord = {x, y};
+    const pixelIndex = pixelCoord.y * numPixels + pixelCoord.x;
+    state = pixelIndex;*/
+    
     let incomingLight = new Vector(0, 0, 0);
-    let rayColor = new Vector(1, 1, 1);
 
-    // Recursivly reflect the ray
-    for (let i = 0; i < maxReflectionDepth; i++) {
-      // Test for intersections with objects in the scene
-      for (const object of scene.objects) {
-        const intersectionResult = object.intersect(this);
+    for (let rayIndex = 0; rayIndex < NumRayPerPixel; rayIndex++) {
+      let closestIntersection = null;
+      let rayColor = new Vector(1, 1, 1);
 
-        if (intersectionResult) {
-          if (
-            !closestIntersection ||
-            intersectionResult.t < closestIntersection.t
-          ) {
-            closestIntersection = intersectionResult;
+      // Recursivly reflect the ray
+      for (let i = 0; i < maxReflectionDepth; i++) {
+        // Test for intersections with objects in the scene
+        for (const object of scene.objects) {
+          const intersectionResult = object.intersect(this);
+
+          if (intersectionResult) {
+            if (
+              !closestIntersection ||
+              intersectionResult.t < closestIntersection.t
+            ) {
+              closestIntersection = intersectionResult;
+            }
           }
+        } 
+
+        if (closestIntersection) {
+          const intersectionPoint = closestIntersection.intersectionPoint;
+          const object = closestIntersection.intersectionObject;
+
+          // Get the normal on the object
+          const normal = object.calculateNormal(intersectionPoint);
+
+          // Update the origin and direction of the ray for the next iteration
+          this.origin = intersectionPoint;
+          this.direction = RayUtils.RandomHemisphereDirection(normal, state);
+
+          // Calculate the incoming light
+          const material = object.material;
+          const emittedLight = material.emittedColor.multiply(material.lightStrength);
+          incomingLight = incomingLight.add(
+            new Vector(
+            emittedLight.x * rayColor.x,
+            emittedLight.y * rayColor.y,
+            emittedLight.z * rayColor.z
+          ));
+          rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
         }
       }
-
-      if (closestIntersection) {
-        const intersectionPoint = closestIntersection.intersectionPoint;
-        const object = closestIntersection.intersectionObject;
-
-        // Get the normal on the object
-        const normal = object.calculateNormal(intersectionPoint);
-
-        // Update the origin and direction of the ray for the next iteration
-        this.origin = intersectionPoint;
-        this.direction = RayUtils.RandomHemisphereDirection(normal, state);
-
-        // Calculate the incoming light
-        const material = object.material;
-        const emittedLight = material.emittedColor.multiply(material.lightStrength);
-        incomingLight = incomingLight.add(
-          new Vector(
-          emittedLight.x * rayColor.x,
-          emittedLight.y * rayColor.y,
-          emittedLight.z * rayColor.z
-        ));
-        rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
-      }
     }
+
+    // Average the incoming light over all samples
+    incomingLight = incomingLight.divide(NumRayPerPixel);
 
     return incomingLight;
   }
@@ -358,7 +370,7 @@ class Scene {
         const state = 167435766 + (x ^ (4 + 3472364)) + (y ^ (3 + 1293423));
 
         // Trace the ray to get the color
-        const color = ray.trace(state);
+        const color = ray.trace(state, x, y);
 
         // Draw the pixel with the calculated color
         ctx.fillStyle =
@@ -372,11 +384,12 @@ class Scene {
 
 //
 const maxReflectionDepth = 3;
+const NumRayPerPixel = 100;
 
 
 // Add the light source 
 const sphereCenter = new Vector(-5, -5, -10);
-const sphereRadius = 1;
+const sphereRadius = 3;
 const sphereMaterial = new Material(
   new Vector(0, 0, 0),
   0,
