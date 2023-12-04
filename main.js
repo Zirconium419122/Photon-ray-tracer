@@ -166,6 +166,8 @@ class Ray {
         }
       }
 
+      console.log(closestIntersection);
+
       if (closestIntersection) {
         const intersectionPoint = closestIntersection.intersectionPoint;
         const object = closestIntersection.intersectionObject;
@@ -192,7 +194,7 @@ class Ray {
       }
     }
 
-    // console.log(incomingLight);
+    console.log(incomingLight);
     return incomingLight;
   }
 
@@ -400,7 +402,7 @@ const sphere1 = new Sphere(sphereCenter1, sphereRadius1, sphereMaterial1);
 
 console.log(sphere1);
 
-const sphereCenter2 = new Vector(3, 1, -11);
+const sphereCenter2 = new Vector(3, 1, -7);
 const sphereRadius2 = 1;
 const sphereMaterial2 = new Material(new Vector(0, 1, 0));
 const sphere2 = new Sphere(sphereCenter2, sphereRadius2, sphereMaterial2);
