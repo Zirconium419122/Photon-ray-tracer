@@ -144,11 +144,9 @@ class Ray {
 
   // Metod to calculate the color by tracing the ray
   trace(state) {
-    // console.log(`Tracing ray with direction: ${JSON.stringify(this.direction)}`);
     let closestIntersection = null;
     let incomingLight = new Vector(0, 0, 0);
     let rayColor = new Vector(1, 1, 1);
-    // console.log(state);
 
     // Recursivly reflect the ray
     for (let i = 0; i < maxReflectionDepth; i++) {
@@ -166,8 +164,6 @@ class Ray {
         }
       }
 
-      console.log(closestIntersection);
-
       if (closestIntersection) {
         const intersectionPoint = closestIntersection.intersectionPoint;
         const object = closestIntersection.intersectionObject;
@@ -182,19 +178,16 @@ class Ray {
         // Calculate the incoming light
         const material = object.material;
         const emittedLight = material.emittedColor.multiply(material.lightStrength);
-        console.log('Before:', incomingLight, emittedLight, rayColor);
         incomingLight = incomingLight.add(
           new Vector(
           emittedLight.x * rayColor.x,
           emittedLight.y * rayColor.y,
           emittedLight.z * rayColor.z
         ));
-        console.log('After:', incomingLight);
         rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
       }
     }
 
-    console.log(incomingLight);
     return incomingLight;
   }
 
@@ -402,7 +395,7 @@ const sphere1 = new Sphere(sphereCenter1, sphereRadius1, sphereMaterial1);
 
 console.log(sphere1);
 
-const sphereCenter2 = new Vector(3, 1, -7);
+const sphereCenter2 = new Vector(3, 1, -11);
 const sphereRadius2 = 1;
 const sphereMaterial2 = new Material(new Vector(0, 1, 0));
 const sphere2 = new Sphere(sphereCenter2, sphereRadius2, sphereMaterial2);
@@ -425,169 +418,3 @@ scene.addObject(cube);
 
 // Render the scene
 scene.render();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-// Metod to calculate the color by tracing the ray
-  trace(depth, state) {
-    // Limit the recursion depth to avoid infinite recursion
-    if (depth > maxReflectionDepth) {
-      return new Vector(0, 0, 0);
-    }
-
-    let closestIntersection = null;
-
-    // Test for intersections with objects in the scene
-    for (const object of scene.objects) {
-      const intersectionResult = object.intersect(this);
-
-      if (intersectionResult) {
-        if (
-          !closestIntersection ||
-          intersectionResult.t < closestIntersection.t
-        ) {
-          closestIntersection = intersectionResult;
-        }
-      }
-    }
-
-    // There's an intersection, calculate the color using the material
-    if (closestIntersection) {
-      const intersectionPoint = closestIntersection.intersectionPoint;
-      const object = closestIntersection.intersectionObject;
-
-      // Get the material color at the intersection point
-      const color = object.getColorAtPoint(intersectionPoint, this);
-
-      // Get the normal on the object
-      const normal = object.calculateNormal(intersectionPoint);
-
-      // If the material is diffusivly reflective, calculate the color of the reflected ray
-      if (object.material.reflectionCoeff == 0) {
-        const reflectedRayDirection = RayUtils.RandomHemishereDirection(
-          normal,
-          state
-        );
-        const reflectedRay = new Ray(intersectionPoint, reflectedRayDirection);
-        const reflectedColor = reflectedRay.trace(depth + 1);
-
-        return color.add(reflectedColor.multiply(0.5));
-      }
-
-      return color;
-    }
-
-    // If no intersection, return background color (black in this example)
-    return new Vector(0, 0, 0);
-  }
-*/
-
-
-
-
-
-/*
-// If the material emits light, return the emitted color
-if (this.lightStrength > 0) {
-  return this.emittedColor.multiply(this.lightStrength);
-}
-
-let color = this.color;
-
-
-
-// Lam
-
-
-/*
-// In Lambertian reflection, the color is simply the surface color of the material
-let color = this.color;
-
-// Check if the material is reflective and we haven't reached the maximum recursion depth
-if (this.reflectionCoeff > 0 && depth < maxReflectionDepth) {
-  const reflectedRayDirection = calculateReflectionDirection(ray.direction, intersectionPoint.normal);
-  const reflectedRay = new Ray(intersectionPoint, reflectedRayDirection);
-
-  // Recursively calculate the color of the reflected ray
-  const reflectedColor = reflectedRay.trace(depth + 1);
-
-  // Combine the reflected color with the material color
-  color = color.multiply(1 - this.reflectionCoeff).add(reflectedColor.multiply(this.reflectionCoeff));
-}
-
-return color;*/
-
-
-
-
-
-
-
-/*
-// For now, let's just use a simple red color
-const color = 'rgb(255, 0, 0)';
-ctx.fillStyle = color;
-ctx.fillRect(x, y, 1, 1);
-*/
-
-
-        
-/*
-// Calculate color based on x-coordinate
-const gradientColor = (x / canvas.width) * 255;
-const color = `rgb(${gradientColor}, 0, 0)`;
-
-// Set pixel color
-ctx.fillStyle = color;
-ctx.fillRect(x, y, 1, 1);
-*/
-
-/*
-// Example usage
-const sphereCenter = new Vector(5, 0, 0);
-const sphereRadius = 1;
-const sphere = new Sphere(sphereCenter, sphereRadius);
-
-// Create a ray
-const origin = new Vector(0, 0, 0);
-const direction = new Vector(1, 0, 0); // A simple ray pointing in the x-direction
-const ray = new Ray(origin, direction);
-
-// Test if the ray intersects with the sphere
-const intersectionResult = sphere.intersect(ray);
-
-if (intersectionResult) {
-  console.log(`Intersection at t=${intersectionResult.t}`);
-  console.log(`Intersection point: ${JSON.stringify(intersectionResult.intersectionPoint)}`);
-} else {
-  console.log("Ray does not intersect with the sphere.");
-}
-
-
-*/
