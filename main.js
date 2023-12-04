@@ -144,11 +144,10 @@ class Ray {
 
   // Metod to calculate the color by tracing the ray
   trace(state, x, y) {
-    /*// Create seed for random number generator
+    // Create seed for random number generator
     const numPixels = canvas.width * canvas.height;
-    const pixelCoord = {x, y};
-    const pixelIndex = pixelCoord.y * numPixels + pixelCoord.x;
-    state = pixelIndex;*/
+    const pixelIndex = y * numPixels + x;
+    state = pixelIndex;
     
     let incomingLight = new Vector(0, 0, 0);
 
@@ -367,7 +366,7 @@ class Scene {
         const ray = new Ray(rayOrigin, rayDirection);
 
         // Get the state for the number generator
-        const state = 167435766 + (x ^ (4 + 3472364)) + (y ^ (3 + 1293423));
+        const state = (x + 349279) * (x * 213574) * (y + 784674) * (y * 426676);
 
         // Trace the ray to get the color
         const color = ray.trace(state, x, y);
