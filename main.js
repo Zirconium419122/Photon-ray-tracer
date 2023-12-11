@@ -169,7 +169,7 @@ class Ray {
               closestIntersection = intersectionResult;
             }
           }
-        } 
+        }
 
         if (closestIntersection) {
           const intersectionPoint = closestIntersection.intersectionPoint;
@@ -352,6 +352,14 @@ class Scene {
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
+    const frameBuffer = [];
+    for (let y = 0; y < canvas.height; y++) {
+      frameBuffer.push([]);
+      for (let x = 0; x < canvas.width; x++) {
+        frameBuffer[y].push(new Vector(0, 0, 0));
+      }
+    }
+
     // Loop through each pixel on the canvas
     for (let y = 0; y < canvas.height; y++) {
       for (let x = 0; x < canvas.width; x++) {
@@ -371,9 +379,28 @@ class Scene {
         // Trace the ray to get the color
         const color = ray.trace(state, x, y);
 
+        // Store the calculated color in the frameBuffer
+        frameBuffer[y][x] = color;
+
         // Draw the pixel with the calculated color
         ctx.fillStyle =
           'rgb(' + color.x * 255 + ', ' + color.y * 255 + ', ' + color.z * 255 + ')';
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+
+    // Average the pixel colors from all frames
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = 0; x < canvas.width; x++) {
+        let sum = new Vector(0, 0, 0);
+
+        sum = sum.add(frameBuffer[y][x]);
+
+        const averageColor = sum.divide(frameBuffer.length);
+
+        // Update the canvas with the averaged color
+        ctx.fillStyle =
+          'rgb(' + averageColor.x * 255 + ', ' + averageColor.y * 255 + ', ' + averageColor.z * 255 + ')';
         ctx.fillRect(x, y, 1, 1);
       }
     }
