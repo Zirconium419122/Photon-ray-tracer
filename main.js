@@ -9,8 +9,8 @@ const imageData = ctx.createImageData(canvas.width, canvas.height);
 const data = imageData.data;
 
 // Set the width and height of the canvas
-canvas.width = 800;  // Replace 800 with your desired width
-canvas.height = 600; // Replace 600 with your desired height
+canvas.width = 1280;  // Replace 800 with your desired width
+canvas.height = 720; // Replace 600 with your desired height
 
 
 
@@ -151,8 +151,8 @@ class Ray {
     // Create seed for random number generator
     const numPixels = canvas.width * canvas.height;
     const pixelIndex = y * numPixels + x;
-    state = pixelIndex;
-    
+    state = pixelIndex * 485732;
+
     let incomingLight = new Vector(0, 0, 0);
 
     for (let rayIndex = 0; rayIndex < NumRayPerPixel; rayIndex++) {
@@ -199,6 +199,10 @@ class Ray {
           ));
           rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
         }
+      }
+
+      if (!closestIntersection) {
+        break;
       }
     }
 
@@ -358,13 +362,18 @@ class Scene {
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Create ImageData object for direct pixel manipulation
+    // Create new ImageData object for direct pixel manipulation
     const imageData = ctx.createImageData(canvas.width, canvas.height);
-    const data = new Uint8ClampedArray(canvas.width * canvas.height);
 
-    let numFrames = 1;
+    // Access the pixel data array (each pixel has 4 values: red, green, blue, and alpha)
+    const data = imageData.data;
 
     let state = 367380976; // 37890367;
+    const maxStateValue = 1e12; // Adjust as needed
+
+    let i = 0;
+
+    let cumulativeImageData = null;
 
     // Recursivly render the scene
     for (let frame = 0; frame < numFrames; frame++) {
@@ -382,40 +391,56 @@ class Scene {
           const ray = new Ray(rayOrigin, rayDirection);
 
           // Get the state for the number generator
-          state += (x + 349279) /** (x * 213574) * (y + 784674)*/ * (y * 426676);
+          // state += (x + 349279) /** (x * 213574) * (y + 784674)*/ * (y * 426676);
+          state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
+
 
           // Trace the ray to get the color
           const color = ray.trace(state, x, y);
 
           // Set the pixel color in ImageData
-          const pixelIndex = (y * canvas.width + x) * 4;
-          data[pixelIndex] = color.x * 255;
-          data[pixelIndex + 1] = color.y * 255;
-          data[pixelIndex + 2] = color.z * 255;
-          data[pixelIndex + 3] = 255; // Alpha channel
-
-          // Put the modified ImageData back to the canvas
-          ctx.putImageData(imageData, x, y);
+          data[i] = color.x * 255;
+          data[i + 1] = color.y * 255;
+          data[i + 2] = color.z * 255;
+          data[i + 3] = 255; // Alpha channel
+          
+          i += 4;
         }
       }
+
+      // If it's not the first frame, average the pixel values
+      if (cumulativeImageData) {
+        // Average the pixel values over frames
+        for (let i = 0; i < data.length; i++) {
+          data[i] = Math.round((data[i] + cumulativeImageData.data[i]) / 2);
+        }
+      }
+
+      // Put the modified ImageData back to the canvas
+      ctx.putImageData(imageData, 0, 0);
+
+      // Update the cumulativeImageData for the next frame
+      cumulativeImageData = imageData;
+
+      console.log(state);
     }
   }
 }
 
 
 //
-const maxReflectionDepth = 3;
+const maxReflectionDepth = 5;
 const NumRayPerPixel = 100;
-
+const numFrames = 10;
 
 // Add the light source 
 const sphereCenter = new Vector(-5, -5, -10);
-const sphereRadius = 3;
+const sphereRadius = 5;
 const sphereMaterial = new Material(
   new Vector(0, 0, 0),
   0,
   new Vector(1, 1, 1),
-  1
+  20
 );
 const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial)
 
@@ -454,7 +479,7 @@ const scene = new Scene();
 scene.addObject(sphere);
 scene.addObject(sphere1);
 scene.addObject(sphere2);
-scene.addObject(sphere3);
+// scene.addObject(sphere3);
 scene.addObject(cube);
 
 
