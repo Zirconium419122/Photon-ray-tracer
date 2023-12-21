@@ -4,9 +4,13 @@ import './style.css'
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
+// Create ImageData object for direct pixel manipulation
+const imageData = ctx.createImageData(canvas.width, canvas.height);
+const data = imageData.data;
+
 // Set the width and height of the canvas
-canvas.width = 800;  // Replace 800 with your desired width
-canvas.height = 600; // Replace 600 with your desired height
+canvas.width = 1280;  // Replace 800 with your desired width
+canvas.height = 720; // Replace 600 with your desired height
 
 
 
@@ -147,13 +151,15 @@ class Ray {
     // Create seed for random number generator
     const numPixels = canvas.width * canvas.height;
     const pixelIndex = y * numPixels + x;
-    state = pixelIndex;
-    
+    state = pixelIndex * 485732;
+
     let incomingLight = new Vector(0, 0, 0);
 
     for (let rayIndex = 0; rayIndex < NumRayPerPixel; rayIndex++) {
       let closestIntersection = null;
       let rayColor = new Vector(1, 1, 1);
+
+      state += 689467;
 
       // Recursivly reflect the ray
       for (let i = 0; i < maxReflectionDepth; i++) {
@@ -193,6 +199,10 @@ class Ray {
           ));
           rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
         }
+      }
+
+      if (!closestIntersection) {
+        break;
       }
     }
 
@@ -352,75 +362,85 @@ class Scene {
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
-    const frameBuffer = [];
-    for (let y = 0; y < canvas.height; y++) {
-      frameBuffer.push([]);
-      for (let x = 0; x < canvas.width; x++) {
-        frameBuffer[y].push(new Vector(0, 0, 0));
+    // Create new ImageData object for direct pixel manipulation
+    const imageData = ctx.createImageData(canvas.width, canvas.height);
+
+    // Access the pixel data array (each pixel has 4 values: red, green, blue, and alpha)
+    const data = imageData.data;
+
+    let state = 367380976; // 37890367;
+    const maxStateValue = 1e12; // Adjust as needed
+
+    let i = 0;
+
+    let cumulativeImageData = null;
+
+    // Recursivly render the scene
+    for (let frame = 0; frame < numFrames; frame++) {
+      // Loop through each pixel on the canvas
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          // Create a ray from the camera to the current pixel
+          const rayOrigin = new Vector(0, 0, 0);
+          const aspectRatio = canvas.width / canvas.height;
+          const rayDirection = new Vector(
+            (x / canvas.width) * 2 - 1,
+            ((y / canvas.height) * 2 - 1) / aspectRatio,
+            -1
+          ).normalize(); // Normalize the direction vector
+          const ray = new Ray(rayOrigin, rayDirection);
+
+          // Get the state for the number generator
+          // state += (x + 349279) /** (x * 213574) * (y + 784674)*/ * (y * 426676);
+          state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
+
+
+          // Trace the ray to get the color
+          const color = ray.trace(state, x, y);
+
+          // Set the pixel color in ImageData
+          data[i] = color.x * 255;
+          data[i + 1] = color.y * 255;
+          data[i + 2] = color.z * 255;
+          data[i + 3] = 255; // Alpha channel
+          
+          i += 4;
+        }
       }
-    }
 
-    // Loop through each pixel on the canvas
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        // Create a ray from the camera to the current pixel
-        const rayOrigin = new Vector(0, 0, 0);
-        const aspectRatio = canvas.width / canvas.height;
-        const rayDirection = new Vector(
-          (x / canvas.width) * 2 - 1,
-          ((y / canvas.height) * 2 - 1) / aspectRatio,
-          -1
-        ).normalize(); // Normalize the direction vector
-        const ray = new Ray(rayOrigin, rayDirection);
-
-        // Get the state for the number generator
-        const state = (x + 349279) * (x * 213574) * (y + 784674) * (y * 426676);
-
-        // Trace the ray to get the color
-        const color = ray.trace(state, x, y);
-
-        // Store the calculated color in the frameBuffer
-        frameBuffer[y][x] = color;
-
-        // Draw the pixel with the calculated color
-        ctx.fillStyle =
-          'rgb(' + color.x * 255 + ', ' + color.y * 255 + ', ' + color.z * 255 + ')';
-        ctx.fillRect(x, y, 1, 1);
+      // If it's not the first frame, average the pixel values
+      if (cumulativeImageData) {
+        // Average the pixel values over frames
+        for (let i = 0; i < data.length; i++) {
+          data[i] = Math.round((data[i] + cumulativeImageData.data[i]) / 2);
+        }
       }
-    }
 
-    // Average the pixel colors from all frames
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        let sum = new Vector(0, 0, 0);
+      // Put the modified ImageData back to the canvas
+      ctx.putImageData(imageData, 0, 0);
 
-        sum = sum.add(frameBuffer[y][x]);
+      // Update the cumulativeImageData for the next frame
+      cumulativeImageData = imageData;
 
-        const averageColor = sum.divide(frameBuffer.length);
-
-        // Update the canvas with the averaged color
-        ctx.fillStyle =
-          'rgb(' + averageColor.x * 255 + ', ' + averageColor.y * 255 + ', ' + averageColor.z * 255 + ')';
-        ctx.fillRect(x, y, 1, 1);
-      }
+      console.log(state);
     }
   }
 }
 
 
 //
-const maxReflectionDepth = 3;
+const maxReflectionDepth = 5;
 const NumRayPerPixel = 100;
-
+const numFrames = 10;
 
 // Add the light source 
 const sphereCenter = new Vector(-5, -5, -10);
-const sphereRadius = 3;
+const sphereRadius = 5;
 const sphereMaterial = new Material(
   new Vector(0, 0, 0),
   0,
   new Vector(1, 1, 1),
-  1
+  20
 );
 const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial)
 
@@ -441,6 +461,13 @@ const sphere2 = new Sphere(sphereCenter2, sphereRadius2, sphereMaterial2);
 
 console.log(sphere2);
 
+const sphereCenter3 = new Vector(0, 5, -5);
+const sphereRadius3 = 4.5;
+const sphereMaterial3 = new Material(new Vector(0.8, 0.8, 0.8));
+const sphere3 = new Sphere(sphereCenter3, sphereRadius3, sphereMaterial3);
+
+console.log(sphere3);
+
 const cubeCenter = new Vector(-2, 1, -5);
 const cubeSize = new Vector(1, 1, 1);
 const cubeMaterial = new Material(new Vector(0, 0, 1));
@@ -452,6 +479,7 @@ const scene = new Scene();
 scene.addObject(sphere);
 scene.addObject(sphere1);
 scene.addObject(sphere2);
+// scene.addObject(sphere3);
 scene.addObject(cube);
 
 
