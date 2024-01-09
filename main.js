@@ -9,8 +9,8 @@ const imageData = ctx.createImageData(canvas.width, canvas.height);
 const data = imageData.data;
 
 // Set the width and height of the canvas
-canvas.width = 1280;  // Replace 800 with your desired width
-canvas.height = 720; // Replace 600 with your desired height
+canvas.width = 800;  // Replace 800 with your desired width
+canvas.height = 600; // Replace 600 with your desired height
 
 
 
@@ -154,60 +154,54 @@ class Ray {
     state = pixelIndex * 485732;
 
     let incomingLight = new Vector(0, 0, 0);
+    let rayColor = new Vector(1, 1, 1);
 
-    for (let rayIndex = 0; rayIndex < NumRayPerPixel; rayIndex++) {
-      let closestIntersection = null;
-      let rayColor = new Vector(1, 1, 1);
+    let closestIntersection = null;
 
-      state += 689467;
+    // Recursivly reflect the ray
+    for (let i = 0; i < maxReflectionDepth; i++) {
+      // Test for intersections with objects in the scene
+      for (const object of scene.objects) {
+        const intersectionResult = object.intersect(this);
 
-      // Recursivly reflect the ray
-      for (let i = 0; i < maxReflectionDepth; i++) {
-        // Test for intersections with objects in the scene
-        for (const object of scene.objects) {
-          const intersectionResult = object.intersect(this);
-
-          if (intersectionResult) {
-            if (
-              !closestIntersection ||
-              intersectionResult.t < closestIntersection.t
-            ) {
-              closestIntersection = intersectionResult;
-            }
+        if (intersectionResult) {
+          if (
+            !closestIntersection ||
+            intersectionResult.t < closestIntersection.t
+          ) {
+            closestIntersection = intersectionResult;
           }
-        }
-
-        if (closestIntersection) {
-          const intersectionPoint = closestIntersection.intersectionPoint;
-          const object = closestIntersection.intersectionObject;
-
-          // Get the normal on the object
-          const normal = object.calculateNormal(intersectionPoint);
-
-          // Update the origin and direction of the ray for the next iteration
-          this.origin = intersectionPoint;
-          this.direction = RayUtils.RandomHemisphereDirection(normal, state);
-
-          // Calculate the incoming light
-          const material = object.material;
-          const emittedLight = material.emittedColor.multiply(material.lightStrength);
-          incomingLight = incomingLight.add(
-            new Vector(
-            emittedLight.x * rayColor.x,
-            emittedLight.y * rayColor.y,
-            emittedLight.z * rayColor.z
-          ));
-          rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
         }
       }
 
+      if (closestIntersection) {
+        const intersectionPoint = closestIntersection.intersectionPoint;
+        const object = closestIntersection.intersectionObject;
+
+        // Get the normal on the object
+        const normal = object.calculateNormal(intersectionPoint);
+
+        // Update the origin and direction of the ray for the next iteration
+        this.origin = intersectionPoint;
+        this.direction = RayUtils.RandomHemisphereDirection(normal, state);
+
+        // Calculate the incoming light
+        const material = object.material;
+        const emittedLight = material.emittedColor.multiply(material.lightStrength);
+        incomingLight = incomingLight.add(
+          new Vector(
+          emittedLight.x * rayColor.x,
+          emittedLight.y * rayColor.y,
+          emittedLight.z * rayColor.z
+        ));
+        rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
+      }
+
+      // If the ray does not intersect with any object we exit the loop
       if (!closestIntersection) {
         break;
       }
     }
-
-    // Average the incoming light over all samples
-    incomingLight = incomingLight.divide(NumRayPerPixel);
 
     return incomingLight;
   }
@@ -380,28 +374,38 @@ class Scene {
       // Loop through each pixel on the canvas
       for (let y = 0; y < canvas.height; y++) {
         for (let x = 0; x < canvas.width; x++) {
-          // Create a ray from the camera to the current pixel
-          const rayOrigin = new Vector(0, 0, 0);
-          const aspectRatio = canvas.width / canvas.height;
-          const rayDirection = new Vector(
-            (x / canvas.width) * 2 - 1,
-            ((y / canvas.height) * 2 - 1) / aspectRatio,
-            -1
-          ).normalize(); // Normalize the direction vector
-          const ray = new Ray(rayOrigin, rayDirection);
+          let accumulatedColor = new Vector(0, 0, 0);
 
-          // Get the state for the number generator
-          // state += (x + 349279) /** (x * 213574) * (y + 784674)*/ * (y * 426676);
-          state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
+          for (let sample = 0; sample < NumRayPerPixel; sample++) {
+            // Create a ray from the camera to the current pixel
+            const rayOrigin = new Vector(0, 0, 0);
+            const aspectRatio = canvas.width / canvas.height;
+            const rayDirection = new Vector(
+              (x / canvas.width) * 2 - 1,
+              ((y / canvas.height) * 2 - 1) / aspectRatio,
+              -1
+            ).normalize(); // Normalize the direction vector
+            const ray = new Ray(rayOrigin, rayDirection);
+
+            // Get the state for the number generator
+            // state += (x + 349279) /** (x * 213574) * (y + 784674)*/ * (y * 426676);
+            state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
 
 
-          // Trace the ray to get the color
-          const color = ray.trace(state, x, y);
+            // Trace the ray to get the color
+            const color = ray.trace(state, x, y);
+
+            // Accumulate the color
+            accumulatedColor = accumulatedColor.add(color);
+          }
+
+          // Average the accumulated color over samples
+          const averagedColor = accumulatedColor.divide(numSamples);
 
           // Set the pixel color in ImageData
-          data[i] = color.x * 255;
-          data[i + 1] = color.y * 255;
-          data[i + 2] = color.z * 255;
+          data[i] = averagedColor.x * 255;
+          data[i + 1] = averagedColor.y * 255;
+          data[i + 2] = averagedColor.z * 255;
           data[i + 3] = 255; // Alpha channel
           
           i += 4;
@@ -431,7 +435,7 @@ class Scene {
 //
 const maxReflectionDepth = 5;
 const NumRayPerPixel = 100;
-const numFrames = 10;
+const numFrames = 1;
 
 // Add the light source 
 const sphereCenter = new Vector(-5, -5, -10);
