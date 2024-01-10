@@ -365,12 +365,13 @@ class Scene {
     let state = 367380976; // 37890367;
     const maxStateValue = 1e12; // Adjust as needed
 
-    let i = 0;
-
     let cumulativeImageData = null;
 
     // Recursivly render the scene
     for (let frame = 0; frame < numFrames; frame++) {
+      // Reset i to 0 at the start of each frame
+      let i = 0;
+      
       // Loop through each pixel on the canvas
       for (let y = 0; y < canvas.height; y++) {
         for (let x = 0; x < canvas.width; x++) {
