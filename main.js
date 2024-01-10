@@ -377,7 +377,7 @@ class Scene {
         for (let x = 0; x < canvas.width; x++) {
           let accumulatedColor = new Vector(0, 0, 0);
 
-          for (let sample = 0; sample < NumRayPerPixel; sample++) {
+          for (let sample = 0; sample < numSamples; sample++) {
             // Create a ray from the camera to the current pixel
             const rayOrigin = new Vector(0, 0, 0);
             const aspectRatio = canvas.width / canvas.height;
@@ -435,7 +435,7 @@ class Scene {
 
 //
 const maxReflectionDepth = 5;
-const NumRayPerPixel = 100;
+const numSamples = 100;
 const numFrames = 1;
 
 // Add the light source 
