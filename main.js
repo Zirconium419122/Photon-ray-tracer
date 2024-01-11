@@ -378,23 +378,30 @@ class Scene {
           let accumulatedColor = new Vector(0, 0, 0);
 
           for (let sample = 0; sample < numSamples; sample++) {
+            // Calculate jittered sample position within the pixel
+            const jitterX = (Math.random() - 0.5) / 2;
+            const jitterY = (Math.random() - 0.5) / 2;
+
+            // Calculate pixel coordinates for the jittered sample
+            const sampleX = x + (sample + jitterX) / numSamples;
+            const sampleY = y + (sample + jitterY) / numSamples;
+            
             // Create a ray from the camera to the current pixel
             const rayOrigin = new Vector(0, 0, 0);
             const aspectRatio = canvas.width / canvas.height;
             const rayDirection = new Vector(
-              (x / canvas.width) * 2 - 1,
-              ((y / canvas.height) * 2 - 1) / aspectRatio,
+              (sampleX / canvas.width) * 2 - 1,
+              ((sampleY / canvas.height) * 2 - 1) / aspectRatio,
               -1
             ).normalize(); // Normalize the direction vector
             const ray = new Ray(rayOrigin, rayDirection);
 
             // Get the state for the number generator
-            // state += (x + 349279) /** (x * 213574) * (y + 784674)*/ * (y * 426676);
             state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
 
 
             // Trace the ray to get the color
-            const color = ray.trace(state, x, y);
+            const color = ray.trace(state, sampleX, sampleY);
 
             // Accumulate the color
             accumulatedColor = accumulatedColor.add(color);
