@@ -9,9 +9,22 @@ const imageData = ctx.createImageData(canvas.width, canvas.height);
 const data = imageData.data;
 
 // Set the width and height of the canvas
-canvas.width = 800;  // Replace 800 with your desired width
-canvas.height = 600; // Replace 600 with your desired height
+canvas.width = 400;  // Replace 800 with your desired width
+canvas.height = 300; // Replace 600 with your desired height
 
+
+
+// Get background color
+function getBackgroundColor(ray) {
+  // Map the vertical position of the ray to a gradient color
+  const t = 0.5 * (ray.direction.y + 1.0);
+  
+  // Linear gradient from white to blue
+  const white = new Vector(1, 1, 1);
+  const blue = new Vector(0.5, 0.7, 1.0);
+
+  return white.multiply(1.0 - t).add(blue.multiply(t));
+}
 
 
 // Vector class
@@ -197,9 +210,9 @@ class Ray {
         rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
       }
 
-      // If the ray does not intersect with any object we exit the loop
+      // If no intersection, return background color
       if (!closestIntersection) {
-        break;
+        return getBackgroundColor(this);
       }
     }
 
@@ -491,7 +504,7 @@ const scene = new Scene();
 scene.addObject(sphere);
 scene.addObject(sphere1);
 scene.addObject(sphere2);
-// scene.addObject(sphere3);
+scene.addObject(sphere3);
 scene.addObject(cube);
 
 
