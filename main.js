@@ -159,66 +159,6 @@ class Ray {
     this.direction = direction; // Vector representing the ray's direction
   }
 
-  // Metod to calculate the color by tracing the ray
-  trace(state, x, y) {
-    // Create seed for random number generator
-    const numPixels = canvas.width * canvas.height;
-    const pixelIndex = y * numPixels + x;
-    state = pixelIndex * 485732;
-
-    let incomingLight = new Vector(0, 0, 0);
-    let rayColor = new Vector(1, 1, 1);
-
-    let closestIntersection = null;
-
-    // Recursivly reflect the ray
-    for (let i = 0; i < maxReflectionDepth; i++) {
-      // Test for intersections with objects in the scene
-      for (const object of scene.objects) {
-        const intersectionResult = object.intersect(this);
-
-        if (intersectionResult) {
-          if (
-            !closestIntersection ||
-            intersectionResult.t < closestIntersection.t
-          ) {
-            closestIntersection = intersectionResult;
-          }
-        }
-      }
-
-      if (closestIntersection) {
-        const intersectionPoint = closestIntersection.intersectionPoint;
-        const object = closestIntersection.intersectionObject;
-
-        // Get the normal on the object
-        const normal = object.calculateNormal(intersectionPoint);
-
-        // Update the origin and direction of the ray for the next iteration
-        this.origin = intersectionPoint;
-        this.direction = RayUtils.RandomHemisphereDirection(normal, state);
-
-        // Calculate the incoming light
-        const material = object.material;
-        const emittedLight = material.emittedColor.multiply(material.lightStrength);
-        incomingLight = incomingLight.add(
-          new Vector(
-          emittedLight.x * rayColor.x,
-          emittedLight.y * rayColor.y,
-          emittedLight.z * rayColor.z
-        ));
-        rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
-      }
-
-      // If no intersection, return background color
-      if (!closestIntersection) {
-        return getBackgroundColor(this);
-      }
-    }
-
-    return incomingLight;
-  }
-
   reflect(normal) {
     const reflectedDirection = RandomHemishereDirection(normal, this.state);
     return new this.constructor(this.origin, reflectedDirection);
@@ -352,20 +292,15 @@ class Cube {
   }
 }
 
-
-// Scene class
-class Scene {
-  constructor() {
-    this.objects = []; // Array to store the objects in the scene
-  }
-
-  // Method to add objects to the scene
-  addObject(object) {
-    this.objects.push(object);
+// Renderer class
+class Renderer {
+  constructor(canvas, scene) {
+    this.canvas = canvas;
+    this.scene = scene;
   }
 
   // Method to render the scene
-  render() {
+  Render() {
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -388,40 +323,11 @@ class Scene {
       // Loop through each pixel on the canvas
       for (let y = 0; y < canvas.height; y++) {
         for (let x = 0; x < canvas.width; x++) {
-          let accumulatedColor = new Vector(0, 0, 0);
+          // Get the state for the number generator
+          state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
 
-          for (let sample = 0; sample < numSamples; sample++) {
-            // Calculate jittered sample position within the pixel
-            const jitterX = (Math.random() - 0.5) / 2;
-            const jitterY = (Math.random() - 0.5) / 2;
-
-            // Calculate pixel coordinates for the jittered sample
-            const sampleX = x + (sample + jitterX) / numSamples;
-            const sampleY = y + (sample + jitterY) / numSamples;
-            
-            // Create a ray from the camera to the current pixel
-            const rayOrigin = new Vector(0, 0, 0);
-            const aspectRatio = canvas.width / canvas.height;
-            const rayDirection = new Vector(
-              (sampleX / canvas.width) * 2 - 1,
-              ((sampleY / canvas.height) * 2 - 1) / aspectRatio,
-              -1
-            ).normalize(); // Normalize the direction vector
-            const ray = new Ray(rayOrigin, rayDirection);
-
-            // Get the state for the number generator
-            state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
-
-
-            // Trace the ray to get the color
-            const color = ray.trace(state, sampleX, sampleY);
-
-            // Accumulate the color
-            accumulatedColor = accumulatedColor.add(color);
-          }
-
-          // Average the accumulated color over samples
-          const averagedColor = accumulatedColor.divide(numSamples);
+          // Call the PerPixel method to get the color at the pixel
+          color = this.PerPixel(x, y, state);
 
           // Set the pixel color in ImageData
           data[i] = averagedColor.x * 255;
@@ -450,10 +356,117 @@ class Scene {
       console.log(state);
     }
   }
+
+  // Method to render each pixel
+  PerPixel(x, y, state) {
+    for (let sample = 0; sample < numSamples; sample++) {
+      // Calculate jittered sample position within the pixel
+      const jitterX = (Math.random() - 0.5) / 2;
+      const jitterY = (Math.random() - 0.5) / 2;
+
+      // Calculate pixel coordinates for the jittered sample
+      const sampleX = x + (sample + jitterX) / numSamples;
+      const sampleY = y + (sample + jitterY) / numSamples;
+      
+      // Create a ray from the camera to the current pixel
+      const rayOrigin = new Vector(0, 0, 0);
+      const aspectRatio = canvas.width / canvas.height;
+      const rayDirection = new Vector(
+        (sampleX / canvas.width) * 2 - 1,
+        ((sampleY / canvas.height) * 2 - 1) / aspectRatio,
+        -1
+      ).normalize(); // Normalize the direction vector
+      const ray = new Ray(rayOrigin, rayDirection);
+
+      // Get the state for the number generator
+      state = RayUtils.RandomValue(sample * (sample + 568) * (sample + 234) * (sample + 345) * (sample + 123));
+
+      // Trace the ray to get the color
+      const color = TraceRay(ray, sampleX, sampleY, state);
+
+      // Accumulate the color
+      accumulatedColor = accumulatedColor.add(color);
+    }
+
+    // Average the accumulated color over samples and return
+    return accumulatedColor.divide(numSamples);
+  }
+
+  // Metod to calculate the color by tracing the ray
+  TraceRay(ray, x, y, state) {
+    // Create seed for random number generator
+    const numPixels = canvas.width * canvas.height;
+    const pixelIndex = y * numPixels + x;
+    state += pixelIndex * 485732;
+
+    let incomingLight = new Vector(0, 0, 0);
+    let rayColor = new Vector(1, 1, 1);
+
+    let closestIntersection = null;
+
+    // Recursivly reflect the ray
+    for (let i = 0; i < maxReflectionDepth; i++) {
+      // Test for intersections with objects in the scene
+      for (const object of this.scene.objects) {
+        const intersectionResult = object.intersect(ray);
+
+        if (intersectionResult) {
+          if (
+            !closestIntersection ||
+            intersectionResult.t < closestIntersection.t
+          ) {
+            closestIntersection = intersectionResult;
+          }
+        }
+      }
+
+      if (closestIntersection) {
+        const intersectionPoint = closestIntersection.intersectionPoint;
+        const object = closestIntersection.intersectionObject;
+
+        // Get the normal on the object
+        const normal = object.calculateNormal(intersectionPoint);
+
+        // Update the origin and direction of the ray for the next iteration
+        ray.origin = intersectionPoint;
+        ray.direction = RayUtils.RandomHemisphereDirection(normal, state);
+
+        // Calculate the incoming light
+        const material = object.material;
+        const emittedLight = material.emittedColor.multiply(material.lightStrength);
+        incomingLight = incomingLight.add(
+          new Vector(
+          emittedLight.x * rayColor.x,
+          emittedLight.y * rayColor.y,
+          emittedLight.z * rayColor.z
+        ));
+        rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
+      }
+
+      // If no intersection, return background color
+      if (!closestIntersection) {
+        return getBackgroundColor(ray);
+      }
+    }
+
+    return incomingLight;
+  }
+}
+
+// Scene class
+class Scene {
+  constructor() {
+    this.objects = []; // Array to store the objects in the scene
+  }
+
+  // Method to add objects to the scene
+  addObject(object) {
+    this.objects.push(object);
+  }
 }
 
 
-//
+// Define the settigns of the renderer
 const maxReflectionDepth = 5;
 const numSamples = 100;
 const numFrames = 1;
@@ -465,7 +478,7 @@ const sphereMaterial = new Material(
   new Vector(0, 0, 0),
   0,
   new Vector(1, 1, 1),
-  20
+  2
 );
 const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial)
 
@@ -507,6 +520,8 @@ scene.addObject(sphere2);
 scene.addObject(sphere3);
 scene.addObject(cube);
 
+// Create the renderer
+const renderer = new Renderer(canvas, scene);
 
 // Render the scene
-scene.render();
+renderer.Render()
