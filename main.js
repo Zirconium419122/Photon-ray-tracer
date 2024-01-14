@@ -89,7 +89,7 @@ class Vector {
 
 
 // Utility class for vector and ray operations
-class RayUtils {
+class Utils {
   // Function to generate a random point on a sphere
   static randomPointOnSphere() {
     const theta = Math.random() * 2 * Math.PI;
@@ -379,7 +379,7 @@ class Renderer {
       const ray = new Ray(rayOrigin, rayDirection);
 
       // Get the state for the number generator
-      state = RayUtils.RandomValue(sample * (sample + 568) * (sample + 234) * (sample + 345) * (sample + 123));
+      state = Utils.RandomValue(sample * (sample + 568) * (sample + 234) * (sample + 345) * (sample + 123));
 
       // Trace the ray to get the color
       const color = TraceRay(ray, sampleX, sampleY, state);
@@ -429,7 +429,7 @@ class Renderer {
 
         // Update the origin and direction of the ray for the next iteration
         ray.origin = intersectionPoint;
-        ray.direction = RayUtils.RandomHemisphereDirection(normal, state);
+        ray.direction = Utils.RandomHemisphereDirection(normal, state);
 
         // Calculate the incoming light
         const material = object.material;
