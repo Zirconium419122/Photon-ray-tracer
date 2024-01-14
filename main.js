@@ -9,8 +9,8 @@ const imageData = ctx.createImageData(canvas.width, canvas.height);
 const data = imageData.data;
 
 // Set the width and height of the canvas
-canvas.width = 1280;  // Replace 800 with your desired width
-canvas.height = 720; // Replace 600 with your desired height
+canvas.width = 1920;  // Replace 800 with your desired width
+canvas.height = 1080; // Replace 600 with your desired height
 
 
 
@@ -117,7 +117,7 @@ class RayUtils {
   }
 
   static RandomHemisphereDirection(normal, state) {
-    const direction = this.RandomDirection(state);
+    const direction = this.randomPointOnSphere(state);
     return direction.multiply(Math.sign(normal.dot(direction)));
   }
 }
@@ -125,7 +125,7 @@ class RayUtils {
 
 // Material class
 class Material {
-  constructor(color, reflectionCoeff, emittedColor = new Vector(0, 0, 0), lightStrength = 0) {
+  constructor(color, reflectionCoeff, emittedColor = new Vector(0, 0, 0), lightStrength = 1) {
     this.color = color;  // Surface color of the material
     this.reflectionCoeff = reflectionCoeff; // Reflection coefficient (0 for no reflection, 1 for full reflection)
     this.emittedColor = emittedColor; // Emitted light color
@@ -151,7 +151,7 @@ class Ray {
     // Create seed for random number generator
     const numPixels = canvas.width * canvas.height;
     const pixelIndex = y * numPixels + x;
-    state = pixelIndex * 485732;
+    state += pixelIndex;
 
     let incomingLight = new Vector(0, 0, 0);
 
@@ -410,9 +410,12 @@ class Scene {
 
       // If it's not the first frame, average the pixel values
       if (cumulativeImageData) {
+        
+        let weight = 1 / (frame + 1);
+
         // Average the pixel values over frames
         for (let i = 0; i < data.length; i++) {
-          data[i] = Math.round((data[i] + cumulativeImageData.data[i]) / 2);
+          data[i] = cumulativeImageData.data[i] * (1 - weight) + data[i] * weight;
         }
       }
 
@@ -429,59 +432,56 @@ class Scene {
 
 
 //
-const maxReflectionDepth = 5;
+const maxReflectionDepth = 10;
 const NumRayPerPixel = 100;
-const numFrames = 10;
+const numFrames = 1;
 
 // Add the light source 
-const sphereCenter = new Vector(-5, -5, -10);
-const sphereRadius = 5;
-const sphereMaterial = new Material(
+const lightCenter = new Vector(2.5, -4.5, -5);
+const lightSize = new Vector(20.5, 20.5, 20.5);
+const lightMaterial = new Material(
   new Vector(0, 0, 0),
   0,
   new Vector(1, 1, 1),
-  20
+  2000
 );
-const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial)
+const light = new Sphere(lightCenter, lightSize, lightMaterial)
 
-console.log(sphere);
+console.log(light);
 
-// Example usage
-const sphereCenter1 = new Vector(0, 0, -5);
-const sphereRadius1 = 1;
-const sphereMaterial1 = new Material(new Vector(1, 0, 0));
-const sphere1 = new Sphere(sphereCenter1, sphereRadius1, sphereMaterial1);
+// Example cornell box
+const left_wall_center = new Vector(-5, 0, -5);
+const left_wall_size = new Vector(0.25, 10, 10);
+const left_wall_material = new Material(new Vector(0, 1, 0));
+const left_wall = new Cube(left_wall_center, left_wall_size, left_wall_material);
 
-console.log(sphere1);
+const right_wall_center = new Vector(5, 0, -5);
+const right_wall_size = new Vector(0.25, 10, 10);
+const right_wall_material = new Material(new Vector(1, 0, 0));
+const right_wall = new Cube(right_wall_center, right_wall_size, right_wall_material);
 
-const sphereCenter2 = new Vector(3, 1, -11);
-const sphereRadius2 = 1;
-const sphereMaterial2 = new Material(new Vector(0, 1, 0));
-const sphere2 = new Sphere(sphereCenter2, sphereRadius2, sphereMaterial2);
+const back_wall_center = new Vector(5, 0, -5);
+const back_wall_size = new Vector(10, 10, 0.25);
+const back_wall_material = new Material(new Vector(1, 0, 0));
+const back_wall = new Cube(back_wall_center, back_wall_size, back_wall_material);
 
-console.log(sphere2);
+const ceiling_center = new Vector(5, -5, -5);
+const ceiling_size = new Vector(10, 0.25, 10);
+const ceiling_material = new Material(new Vector(1, 0, 0));
+const ceiling = new Cube(ceiling_center, ceiling_size, ceiling_material);
 
-const sphereCenter3 = new Vector(0, 5, -5);
-const sphereRadius3 = 4.5;
-const sphereMaterial3 = new Material(new Vector(0.8, 0.8, 0.8));
-const sphere3 = new Sphere(sphereCenter3, sphereRadius3, sphereMaterial3);
+const floor_center = new Vector(5, 0, -5);
+const floor_size = new Vector(10, 0.25, 10);
+const floor_material = new Material(new Vector(1, 0, 0));
+const floor = new Cube(floor_center, floor_size, floor_material);
 
-console.log(sphere3);
-
-const cubeCenter = new Vector(-2, 1, -5);
-const cubeSize = new Vector(1, 1, 1);
-const cubeMaterial = new Material(new Vector(0, 0, 1));
-const cube = new Cube(cubeCenter, cubeSize, cubeMaterial);
-
-console.log(cube);
-
-const scene = new Scene();
-scene.addObject(sphere);
-scene.addObject(sphere1);
-scene.addObject(sphere2);
-// scene.addObject(sphere3);
-scene.addObject(cube);
-
+const scene = new Scene;
+scene.addObject(light);
+scene.addObject(ceiling);
+scene.addObject(left_wall);
+scene.addObject(right_wall);
+scene.addObject(back_wall);
+scene.addObject(floor);
 
 // Render the scene
 scene.render();
