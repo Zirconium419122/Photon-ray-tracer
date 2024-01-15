@@ -144,11 +144,6 @@ class Material {
     this.emittedColor = emittedColor; // Emitted light color
     this.lightStrength = lightStrength; // Light strength (intensity)
   }
-
-  // Method to calculate the color of a point on the material
-  shade(ray, intersectionPoint) {
-    return this.color;
-  }
 }
 
 
@@ -208,12 +203,6 @@ class Sphere {
   // Method to calculate the normal at a point on the sphere
   calculateNormal(point) {
     return point.subtract(this.center).normalize();
-  }
-
-  // Method to get the material color at a specific point on the sphere
-  getColorAtPoint(point, ray) {
-    const normal = this.calculateNormal(point);
-    return this.material.shade(ray, { point, normal });
   }
 }
 
@@ -283,12 +272,6 @@ class Cube {
       // Point is on the face with the largest z-coordinate differance
       return new Vector(0, 0, Math.sign(dz));
     }
-  }
-
-  // Method to get the material color at a specific point on the cube
-  getColorAtPoint(point, ray) {
-    const normal = this.calculateNormal(point);
-    return this.material.shade(ray, { point, normal });
   }
 }
 
