@@ -9,8 +9,8 @@ const imageData = ctx.createImageData(canvas.width, canvas.height);
 const data = imageData.data;
 
 // Set the width and height of the canvas
-canvas.width = 400;  // Replace 800 with your desired width
-canvas.height = 300; // Replace 600 with your desired height
+canvas.width = 1280;  // Replace 800 with your desired width
+canvas.height = 720; // Replace 600 with your desired height
 
 
 
@@ -310,12 +310,12 @@ class Renderer {
           state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
 
           // Call the PerPixel method to get the color at the pixel
-          color = this.PerPixel(x, y, state);
+          let color = this.PerPixel(x, y, state);
 
           // Set the pixel color in ImageData
-          data[i] = averagedColor.x * 255;
-          data[i + 1] = averagedColor.y * 255;
-          data[i + 2] = averagedColor.z * 255;
+          data[i] = color.x * 255;
+          data[i + 1] = color.y * 255;
+          data[i + 2] = color.z * 255;
           data[i + 3] = 255; // Alpha channel
           
           i += 4;
@@ -336,12 +336,15 @@ class Renderer {
       // Update the cumulativeImageData for the next frame
       cumulativeImageData = imageData;
 
-      console.log(state);
+      console.log(`Frame: ${frame} ended with this state: ${state}`);
     }
   }
 
   // Method to render each pixel
   PerPixel(x, y, state) {
+    // Make the accumulateColor variable
+    let accumulatedColor = new Vector(0, 0, 0);
+
     for (let sample = 0; sample < numSamples; sample++) {
       // Calculate jittered sample position within the pixel
       const jitterX = (Math.random() - 0.5) / 2;
@@ -365,7 +368,7 @@ class Renderer {
       state = Utils.RandomValue(sample * (sample + 568) * (sample + 234) * (sample + 345) * (sample + 123));
 
       // Trace the ray to get the color
-      const color = TraceRay(ray, sampleX, sampleY, state);
+      const color = this.TraceRay(ray, sampleX, sampleY, state);
 
       // Accumulate the color
       accumulatedColor = accumulatedColor.add(color);
@@ -424,12 +427,19 @@ class Renderer {
           emittedLight.z * rayColor.z
         ));
         rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
+
+        if (object.material.lightStrength > 0) {
+          return incomingLight;
+        }
       }
 
       // If no intersection, return background color
       if (!closestIntersection) {
-        return getBackgroundColor(ray);
+        let BackgroundColor = getBackgroundColor(ray);
+        return new Vector(rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z);
       }
+
+      closestIntersection = null;
     }
 
     return incomingLight;
@@ -450,9 +460,9 @@ class Scene {
 
 
 // Define the settigns of the renderer
-const maxReflectionDepth = 5;
-const numSamples = 100;
-const numFrames = 1;
+const maxReflectionDepth = 10;
+const numSamples = 20;
+const numFrames = 10;
 
 // Add the light source 
 const sphereCenter = new Vector(-5, -5, -10);
@@ -484,7 +494,7 @@ console.log(sphere2);
 
 const sphereCenter3 = new Vector(0, 5, -5);
 const sphereRadius3 = 4.5;
-const sphereMaterial3 = new Material(new Vector(0.8, 0.8, 0.8));
+const sphereMaterial3 = new Material(new Vector(0.5, 0.5, 0.5));
 const sphere3 = new Sphere(sphereCenter3, sphereRadius3, sphereMaterial3);
 
 console.log(sphere3);
