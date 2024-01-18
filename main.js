@@ -326,8 +326,10 @@ class Renderer {
       if (cumulativeImageData) {
         // Average the pixel values over frames
         for (let i = 0; i < data.length; i++) {
-          data[i] = Math.round((data[i] + cumulativeImageData.data[i]) / 2);
+          cumulativeImageData[i] = cumulativeImageData + (data[i] / numFrames);
         }
+      } else {
+        cumulativeImageData = imageData;
       }
 
       // Put the modified ImageData back to the canvas
