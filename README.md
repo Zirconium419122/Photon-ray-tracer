@@ -38,10 +38,10 @@ If you have specific features you'd like to see added to Photon, please open an 
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/photon-ray-tracer.git
+   git clone https://github.com/Zirconium419122/Photon-ray-tracer.git
 2. Navigate to the project directory
    ```bash
-   cd photon-ray-tracer
+   cd Photon-ray-tracer
 3. Run the following command to start the development server
    ```bash
    npm run dev
