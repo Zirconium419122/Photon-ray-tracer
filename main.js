@@ -1,4 +1,8 @@
 import './style.css'
+import init, { Vector } from "./pkg/raytracer.js"
+
+await init();
+
 
 // Get the canvas element and the 2d context
 const canvas = document.getElementById('canvas');
@@ -24,67 +28,6 @@ function getBackgroundColor(ray) {
   const blue = new Vector(0.5, 0.7, 1.0);
 
   return white.multiply(1.0 - t).add(blue.multiply(t));
-}
-
-
-// Vector class
-class Vector {
-  constructor(x, y, z) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-  }
-
-  // Method to add another vector
-  add(v) {
-    return new Vector(this.x + v.x, this.y + v.y, this.z + v.z);
-  }
-
-  // Method to subtract another vector
-  subtract(v) {
-    return new Vector(this.x - v.x, this.y - v.y, this.z - v.z);
-  }
-
-  // Method to multiply by a scalar
-  multiply(scalar) {
-    return new Vector(this.x * scalar, this.y * scalar, this.z * scalar);
-  }
-
-  // Method to divide by a scalar
-  divide(scalar) {
-    // Check for division by zero to avoid errors
-    if (scalar !== 0) {
-      return new Vector(this.x / scalar, this.y / scalar, this.z / scalar);
-    } else {
-      console.error("Division by zero!");
-      return null;
-    }
-  }
-
-  // Method to calculate the dot product with another vector
-  dot(v) {
-    return this.x * v.x + this.y * v.y + this.z * v.z;
-  }
-
-  // Method to calculate the cross product with another vector
-  cross(v) {
-    return new Vector(
-      this.y * v.z - this.z * v.y,
-      this.z * v.x - this.x * v.z,
-      this.x * v.y - this.y * v.x
-    );
-  }
-
-  // Method to calculate the magnitude of the vector
-  magnitude() {
-    return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-  }
-
-  // Method to normalize the vector (make it a unit vector)
-  normalize() {
-    const mag = this.magnitude();
-    return new Vector(this.x / mag, this.y / mag, this.z / mag);
-  }
 }
 
 
@@ -296,7 +239,7 @@ class Renderer {
     let state = 367380976; // 37890367;
     const maxStateValue = 1e12; // Adjust as needed
 
-    let cumulativeImageData = null;
+    let cumulativeImageData = imageData;
 
     // Recursivly render the scene
     for (let frame = 0; frame < numFrames; frame++) {
@@ -322,21 +265,13 @@ class Renderer {
         }
       }
 
-      // If it's not the first frame, average the pixel values
-      if (cumulativeImageData) {
-        // Average the pixel values over frames
-        for (let i = 0; i < data.length; i++) {
-          cumulativeImageData[i] = cumulativeImageData + (data[i] / numFrames);
-        }
-      } else {
-        cumulativeImageData = imageData;
+      // Update the cumulativeImageData with averaging the pixel values over frames
+      for (let i = 0; i < data.length; i++) {
+        cumulativeImageData[i] = cumulativeImageData + (data[i] / numFrames);
       }
 
       // Put the modified ImageData back to the canvas
       ctx.putImageData(imageData, 0, 0);
-
-      // Update the cumulativeImageData for the next frame
-      cumulativeImageData = imageData;
 
       console.log(`Frame: ${frame} ended with this state: ${state}`);
     }

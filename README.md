@@ -38,7 +38,7 @@ If you have specific features you'd like to see added to Photon, please open an 
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/photon-ray-tracer.git
+   git clone https://github.com/zirconium419122/photon-ray-tracer.git
 2. Navigate to the project directory
    ```bash
    cd photon-ray-tracer
