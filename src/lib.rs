@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-// Rust Vector struct 
+// Rust Vector struct
 #[wasm_bindgen]
 #[derive(Debug, Copy, Clone)]
 pub struct Vector {
@@ -31,9 +31,9 @@ impl Vector {
     #[wasm_bindgen]
     pub fn subtract(&self, v: &Vector) -> Vector {
         Vector {
-            x: self.x * v.x,
-            y: self.y * v.y,
-            z: self.z * v.z,
+            x: self.x - v.x,
+            y: self.y - v.y,
+            z: self.z - v.z,
         }
     }
 

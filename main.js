@@ -13,8 +13,8 @@ const imageData = ctx.createImageData(canvas.width, canvas.height);
 const data = imageData.data;
 
 // Set the width and height of the canvas
-canvas.width = 1280;  // Replace 800 with your desired width
-canvas.height = 720; // Replace 600 with your desired height
+canvas.width = 800;  // Replace 800 with your desired width
+canvas.height = 600; // Replace 600 with your desired height
 
 
 
@@ -237,7 +237,7 @@ class Renderer {
     const data = imageData.data;
 
     let state = 367380976; // 37890367;
-    const maxStateValue = 1e12; // Adjust as needed
+    const maxStateValue = 1e9; // Adjust as needed
 
     let cumulativeImageData = imageData;
 
@@ -263,6 +263,8 @@ class Renderer {
           
           i += 4;
         }
+        
+        console.log(`Row number ${y} is complete`);
       }
 
       // Update the cumulativeImageData with averaging the pixel values over frames
@@ -270,11 +272,11 @@ class Renderer {
         cumulativeImageData[i] = cumulativeImageData + (data[i] / numFrames);
       }
 
-      // Put the modified ImageData back to the canvas
-      ctx.putImageData(imageData, 0, 0);
-
       console.log(`Frame: ${frame} ended with this state: ${state}`);
     }
+
+    // Put the modified ImageData back to the canvas
+    ctx.putImageData(cumulativeImageData, 0, 0);
   }
 
   // Method to render each pixel
@@ -399,7 +401,7 @@ class Scene {
 // Define the settigns of the renderer
 const maxReflectionDepth = 10;
 const numSamples = 20;
-const numFrames = 10;
+const numFrames = 1;
 
 // Add the light source 
 const sphereCenter = new Vector(-5, -5, -10);
