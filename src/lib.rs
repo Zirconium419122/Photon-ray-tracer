@@ -2,6 +2,7 @@ use wasm_bindgen::prelude::*;
 
 // Rust Vector struct
 #[wasm_bindgen]
+#[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct Vector {
     pub x: f64,
@@ -15,6 +16,15 @@ impl Vector {
     #[wasm_bindgen(constructor)]
     pub fn new(x: f64, y: f64, z: f64) -> Vector {
         Vector { x, y, z }
+    }
+
+    // Method to set a vector to specific values
+    #[wasm_bindgen]
+    pub fn set(mut self, x: f64, y: f64, z: f64) -> Vector {
+        self.x = x;
+        self.y = y;
+        self.z = z;
+        self
     }
 
     // Method to add another vector

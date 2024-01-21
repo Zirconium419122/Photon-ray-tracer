@@ -1,8 +1,7 @@
 import './style.css'
-import init, { Vector } from "./pkg/raytracer.js"
+import init, * as wasm from "./pkg/raytracer.js"
 
 await init();
-
 
 // Get the canvas element and the 2d context
 const canvas = document.getElementById('canvas');
@@ -16,20 +15,22 @@ const data = imageData.data;
 canvas.width = 800;  // Replace 800 with your desired width
 canvas.height = 600; // Replace 600 with your desired height
 
-
-
 // Get background color
 function getBackgroundColor(ray) {
   // Map the vertical position of the ray to a gradient color
   const t = 0.5 * (ray.direction.y + 1.0);
   
   // Linear gradient from white to blue
-  const white = new Vector(1, 1, 1);
-  const blue = new Vector(0.5, 0.7, 1.0);
+  const white = new wasm.Vector(1, 1, 1);
+  const blue = new wasm.Vector(0.5, 0.7, 1.0);
 
-  return white.multiply(1.0 - t).add(blue.multiply(t));
+  const gradient = white.multiply(1.0 - t).add(blue.multiply(t))
+
+  white.free();
+  blue.free();
+
+  return gradient;
 }
-
 
 // Utility class for vector and ray operations
 class Utils {
@@ -42,7 +43,7 @@ class Utils {
     const y = Math.sin(phi) * Math.sin(theta);
     const z = Math.cos(phi);
 
-    return new Vector(x, y, z)
+    return new wasm.Vector(x, y, z)
   }
 
   // PCG (permuated congruentila generator). Thanks to:
@@ -60,7 +61,7 @@ class Utils {
       const y = this.RandomValue(state += 13146368) * 2 - 1;
       const z = this.RandomValue(state += 23652568) * 2 - 1;
 
-      const pointInCube = new Vector(x, y, z);
+      const pointInCube = new wasm.Vector(x, y, z);
       const sqrDstFromCenter = pointInCube.dot(pointInCube);
 
       // If point is inside sphere, scale it to lie on the surface (otherwise, keep trying)
@@ -81,7 +82,7 @@ class Utils {
 
 // Material class
 class Material {
-  constructor(color, reflectionCoeff, emittedColor = new Vector(0, 0, 0), lightStrength = 0) {
+  constructor(color, reflectionCoeff, emittedColor = new wasm.Vector(0, 0, 0), lightStrength = 0) {
     this.color = color;  // Surface color of the material
     this.reflectionCoeff = reflectionCoeff; // Reflection coefficient (0 for no reflection, 1 for full reflection)
     this.emittedColor = emittedColor; // Emitted light color
@@ -207,13 +208,13 @@ class Cube {
     // Identify the face closest to the point and assign the normal accordingly
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > Math.abs(dz)) {
       // Point is on the face with the largest x-coordinate differance
-      return new Vector(Math.sign(dx), 0, 0);
+      return new wasm.Vector(Math.sign(dx), 0, 0);
     } else if (Math.abs(dy) > Math.abs(dz)) {
       // Point is on the face with the largest y-coordinate differance
-      return new Vector(0, Math.sign(dy), 0);
+      return new wasm.Vector(0, Math.sign(dy), 0);
     } else {
       // Point is on the face with the largest z-coordinate differance
-      return new Vector(0, 0, Math.sign(dz));
+      return new wasm.Vector(0, 0, Math.sign(dz));
     }
   }
 }
@@ -282,7 +283,7 @@ class Renderer {
   // Method to render each pixel
   PerPixel(x, y, state) {
     // Make the accumulateColor variable
-    let accumulatedColor = new Vector(0, 0, 0);
+    let accumulatedColor = new wasm.Vector(0, 0, 0);
 
     for (let sample = 0; sample < numSamples; sample++) {
       // Calculate jittered sample position within the pixel
@@ -294,9 +295,9 @@ class Renderer {
       const sampleY = y + (sample + jitterY) / numSamples;
       
       // Create a ray from the camera to the current pixel
-      const rayOrigin = new Vector(0, 0, 0);
+      const rayOrigin = new wasm.Vector(0, 0, 0);
       const aspectRatio = canvas.width / canvas.height;
-      const rayDirection = new Vector(
+      const rayDirection = new wasm.Vector(
         (sampleX / canvas.width) * 2 - 1,
         ((sampleY / canvas.height) * 2 - 1) / aspectRatio,
         -1
@@ -324,8 +325,8 @@ class Renderer {
     const pixelIndex = y * numPixels + x;
     state += pixelIndex * 485732;
 
-    let incomingLight = new Vector(0, 0, 0);
-    let rayColor = new Vector(1, 1, 1);
+    let incomingLight = new wasm.Vector(0, 0, 0);
+    let rayColor = new wasm.Vector(1, 1, 1);
 
     let closestIntersection = null;
 
@@ -359,13 +360,13 @@ class Renderer {
         // Calculate the incoming light
         const material = object.material;
         const emittedLight = material.emittedColor.multiply(material.lightStrength);
-        incomingLight = incomingLight.add(
-          new Vector(
+        incomingLight.add(
+          new wasm.Vector(
           emittedLight.x * rayColor.x,
           emittedLight.y * rayColor.y,
           emittedLight.z * rayColor.z
         ));
-        rayColor = new Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
+        rayColor = rayColor.set(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
 
         if (object.material.lightStrength > 0) {
           return incomingLight;
@@ -375,7 +376,7 @@ class Renderer {
       // If no intersection, return background color
       if (!closestIntersection) {
         let BackgroundColor = getBackgroundColor(ray);
-        return new Vector(rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z);
+        return new wasm.Vector(rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z);
       }
 
       closestIntersection = null;
@@ -404,12 +405,12 @@ const numSamples = 20;
 const numFrames = 1;
 
 // Add the light source 
-const sphereCenter = new Vector(-5, -5, -10);
+const sphereCenter = new wasm.Vector(-5, -5, -10);
 const sphereRadius = 5;
 const sphereMaterial = new Material(
-  new Vector(0, 0, 0),
+  new wasm.Vector(0, 0, 0),
   0,
-  new Vector(1, 1, 1),
+  new wasm.Vector(1, 1, 1),
   2
 );
 const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial)
@@ -417,30 +418,30 @@ const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial)
 console.log(sphere);
 
 // Example usage
-const sphereCenter1 = new Vector(0, 0, -5);
+const sphereCenter1 = new wasm.Vector(0, 0, -5);
 const sphereRadius1 = 1;
-const sphereMaterial1 = new Material(new Vector(1, 0, 0));
+const sphereMaterial1 = new Material(new wasm.Vector(1, 0, 0));
 const sphere1 = new Sphere(sphereCenter1, sphereRadius1, sphereMaterial1);
 
 console.log(sphere1);
 
-const sphereCenter2 = new Vector(3, 1, -11);
+const sphereCenter2 = new wasm.Vector(3, 1, -11);
 const sphereRadius2 = 1;
-const sphereMaterial2 = new Material(new Vector(0, 1, 0));
+const sphereMaterial2 = new Material(new wasm.Vector(0, 1, 0));
 const sphere2 = new Sphere(sphereCenter2, sphereRadius2, sphereMaterial2);
 
 console.log(sphere2);
 
-const sphereCenter3 = new Vector(0, 5, -5);
+const sphereCenter3 = new wasm.Vector(0, 5, -5);
 const sphereRadius3 = 4.5;
-const sphereMaterial3 = new Material(new Vector(0.5, 0.5, 0.5));
+const sphereMaterial3 = new Material(new wasm.Vector(0.5, 0.5, 0.5));
 const sphere3 = new Sphere(sphereCenter3, sphereRadius3, sphereMaterial3);
 
 console.log(sphere3);
 
-const cubeCenter = new Vector(-2, 1, -5);
-const cubeSize = new Vector(1, 1, 1);
-const cubeMaterial = new Material(new Vector(0, 0, 1));
+const cubeCenter = new wasm.Vector(-2, 1, -5);
+const cubeSize = new wasm.Vector(1, 1, 1);
+const cubeMaterial = new Material(new wasm.Vector(0, 0, 1));
 const cube = new Cube(cubeCenter, cubeSize, cubeMaterial);
 
 console.log(cube);
