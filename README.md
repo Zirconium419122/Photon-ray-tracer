@@ -1,6 +1,6 @@
 # Photon Ray Tracer
 
-Photon is a simple ray tracer implemented in JavaScript. It is designed to render realistic images by simulating the behavior of light rays as they interact with objects in a 3D scene.
+Photon is a simple ray tracer implemented in JavaScript and Rust. It is designed to render realistic images by simulating the behavior of light rays as they interact with objects in a 3D scene.
 
 ## Features
 
@@ -31,7 +31,9 @@ If you have specific features you'd like to see added to Photon, please open an 
 
 ### Prerequisites
 
-- Web browser with support for HTML5 and JavaScript and Node.js
+- Web browser with support for HTML5 JavaScript and WASM
+- Cargo and wasm-pack for the compilation of the Rust code
+- Node.js to host the web server
 
 ### Installation
 
@@ -42,6 +44,9 @@ If you have specific features you'd like to see added to Photon, please open an 
 2. Navigate to the project directory
    ```bash
    cd Photon-ray-tracer
-3. Run the following command to start the development server
+3. Compile the Rust code into WASM and create the JavaScript glue files
+   ```bash
+   wasm-pack build --target web
+4. Run the following command to start the development server
    ```bash
    npm run dev
