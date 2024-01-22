@@ -20,11 +20,10 @@ impl Vector {
 
     // Method to set a vector to specific values
     #[wasm_bindgen]
-    pub fn set(mut self, x: f64, y: f64, z: f64) -> Vector {
+    pub fn set(&mut self, x: f64, y: f64, z: f64) {
         self.x = x;
         self.y = y;
         self.z = z;
-        self
     }
 
     // Method to add another vector

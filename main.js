@@ -12,8 +12,8 @@ const imageData = ctx.createImageData(canvas.width, canvas.height);
 const data = imageData.data;
 
 // Set the width and height of the canvas
-canvas.width = 800;  // Replace 800 with your desired width
-canvas.height = 600; // Replace 600 with your desired height
+canvas.width = 400;  // Replace 800 with your desired width
+canvas.height = 300; // Replace 600 with your desired height
 
 // Get background color
 function getBackgroundColor(ray) {
@@ -332,6 +332,9 @@ class Renderer {
 
     // Recursivly reflect the ray
     for (let i = 0; i < maxReflectionDepth; i++) {
+      // // Change the state every reflection
+      // state += 243723;
+
       // Test for intersections with objects in the scene
       for (const object of this.scene.objects) {
         const intersectionResult = object.intersect(ray);
@@ -360,13 +363,13 @@ class Renderer {
         // Calculate the incoming light
         const material = object.material;
         const emittedLight = material.emittedColor.multiply(material.lightStrength);
-        incomingLight.add(
-          new wasm.Vector(
+        const emission = new wasm.Vector(
           emittedLight.x * rayColor.x,
           emittedLight.y * rayColor.y,
-          emittedLight.z * rayColor.z
-        ));
-        rayColor = rayColor.set(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
+          emittedLight.z * rayColor.z,
+        );
+        incomingLight = incomingLight.add(emission);
+        rayColor = new wasm.Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
 
         if (object.material.lightStrength > 0) {
           return incomingLight;
