@@ -19,7 +19,6 @@ impl Vector {
     }
 
     // Method to set a vector to specific values
-    #[wasm_bindgen]
     pub fn set(&mut self, x: f64, y: f64, z: f64) {
         self.x = x;
         self.y = y;
@@ -27,7 +26,6 @@ impl Vector {
     }
 
     // Method to add another vector
-    #[wasm_bindgen]
     pub fn add(&self, v: &Vector) -> Vector {
         Vector {
             x: self.x + v.x,
@@ -37,7 +35,6 @@ impl Vector {
     }
 
     // Method to subtract another vector
-    #[wasm_bindgen]
     pub fn subtract(&self, v: &Vector) -> Vector {
         Vector {
             x: self.x - v.x,
@@ -47,7 +44,6 @@ impl Vector {
     }
 
     // Metod to multiply with a scalar
-    #[wasm_bindgen]
     pub fn multiply(&self, scalar: f64) -> Vector {
         Vector {
             x: self.x * scalar,
@@ -57,7 +53,6 @@ impl Vector {
     }
 
     // Method to divide by a scalar
-    #[wasm_bindgen]
     pub fn divide(&self, scalar: f64) -> Vector {
         // Check for division by zero to avoid errors
         if scalar != 0.0 {
@@ -73,13 +68,11 @@ impl Vector {
     }
 
     // Method to calculate the dot product with another vector
-    #[wasm_bindgen]
     pub fn dot(&self, v: &Vector) -> f64 {
         self.x * v.x + self.y * v.y + self.z * v.z
     }
 
     // Method to calculate the cross product with another vector
-    #[wasm_bindgen]
     pub fn cross(&self, v: &Vector) -> Vector {
         Vector {
             x: self.y * v.z - self.z * v.y,
@@ -89,13 +82,11 @@ impl Vector {
     }
 
     // Method to calculate the magnitude of the vector
-    #[wasm_bindgen]
     pub fn magnitude(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
     // Method to normalize the vector (make it a unit vector)
-    #[wasm_bindgen]
     pub fn normalize(&self) -> Vector {
         let mag = self.magnitude();
         Vector {
@@ -104,4 +95,59 @@ impl Vector {
             z: self.z / mag,
         }
     }
+}
+
+// Rust VectorPool struct
+#[wasm_bindgen]
+pub struct VectorPool {
+    pool: Vec<Vector>,
+}
+
+// Implement the methods for the VectorPool struct
+#[wasm_bindgen]
+impl VectorPool {
+    // Create a new VectorPool with a specified capacity
+    #[wasm_bindgen(constructor)]
+    pub fn new(capacity: usize) -> Self {
+        let pool = Vec::with_capacity(capacity);
+        Self { pool }
+    }
+
+    // Get a Vector from the pool by index, or allocate a new one if the pool is empty
+    pub fn get(&mut self, index: usize) -> Vector {
+        if index < self.pool.len() {
+            self.pool[index]
+        } else {
+            // You might want to handle the case when the pool is empty differently
+            Vector { x: 0.0, y: 0.0, z: 0.0 }
+        }
+    }
+
+    // Set a specific index to a Vector to update the values of a specific Vector in the pool
+    pub fn set(&mut self, index: usize, values: Vector) {
+        if index < self.pool.len() {
+            self.pool[index] = values;
+        } else {
+            // Optionally we could handle an out-of-bounds index
+            println!("Index out of bounds: {}", index);
+        }
+    }
+
+    // Set a specific index to some new values to update the values of a specific Vector in the pool
+    pub fn set_values(&mut self, index: usize, x: f64, y: f64, z: f64) {
+        if index < self.pool.len() {
+            let vector = &mut self.pool[index];
+            vector.x = x;
+            vector.y = y;
+            vector.z = z;
+        } else {
+            // Optionally we could handle an out-of-bounds index
+            println!("Index out of bounds: {}", index);
+        }
+    }
+
+    // // Return a Vector to the pool by pushing it back
+    // pub fn return_to_pool(&mut self, vector: Vector) {
+    //     self.pool.push(vector);
+    // }
 }

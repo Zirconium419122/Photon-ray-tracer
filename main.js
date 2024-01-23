@@ -3,6 +3,8 @@ import init, * as wasm from "./pkg/raytracer.js"
 
 await init();
 
+const TraceRayVectorPool = new wasm.VectorPool(10);
+
 // Get the canvas element and the 2d context
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -325,8 +327,10 @@ class Renderer {
     const pixelIndex = y * numPixels + x;
     state += pixelIndex * 485732;
 
-    let incomingLight = new wasm.Vector(0, 0, 0);
-    let rayColor = new wasm.Vector(1, 1, 1);
+    TraceRayVectorPool.set_values(0, 0, 0, 0);
+    let incomingLight = TraceRayVectorPool.get(0);
+    TraceRayVectorPool.set_values(1, 1, 1, 1);
+    let rayColor = TraceRayVectorPool.get(1);
 
     let closestIntersection = null;
 
@@ -354,7 +358,8 @@ class Renderer {
         const object = closestIntersection.intersectionObject;
 
         // Get the normal on the object
-        const normal = object.calculateNormal(intersectionPoint);
+        TraceRayVectorPool.set(2, object.calculateNormal(intersectionPoint));
+        const normal = TraceRayVectorPool.get(2);
 
         // Update the origin and direction of the ray for the next iteration
         ray.origin = intersectionPoint;
@@ -362,14 +367,12 @@ class Renderer {
 
         // Calculate the incoming light
         const material = object.material;
-        const emittedLight = material.emittedColor.multiply(material.lightStrength);
-        const emission = new wasm.Vector(
-          emittedLight.x * rayColor.x,
-          emittedLight.y * rayColor.y,
-          emittedLight.z * rayColor.z,
-        );
+        TraceRayVectorPool.set(3, material.emittedColor.multiply(material.lightStrength));
+        const emittedLight = TraceRayVectorPool.get(3);
+        TraceRayVectorPool.set_values(4, emittedLight.x * rayColor.x, emittedLight.y * rayColor.y, emittedLight.z * rayColor.z);
+        const emission = TraceRayVectorPool.get(4);
         incomingLight = incomingLight.add(emission);
-        rayColor = new wasm.Vector(rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
+        TraceRayVectorPool.set_values(1, rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
 
         if (object.material.lightStrength > 0) {
           return incomingLight;
@@ -404,7 +407,7 @@ class Scene {
 
 // Define the settigns of the renderer
 const maxReflectionDepth = 10;
-const numSamples = 20;
+const numSamples = 1;
 const numFrames = 1;
 
 // Add the light source 
