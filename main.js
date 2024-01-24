@@ -14,8 +14,8 @@ const imageData = ctx.createImageData(canvas.width, canvas.height);
 const data = imageData.data;
 
 // Set the width and height of the canvas
-canvas.width = 400;  // Replace 800 with your desired width
-canvas.height = 300; // Replace 600 with your desired height
+canvas.width = 800;  // Replace 800 with your desired width
+canvas.height = 600; // Replace 600 with your desired height
 
 // Get background color
 function getBackgroundColor(ray) {
@@ -371,6 +371,9 @@ class Renderer {
         const emittedLight = TraceRayVectorPool.get(3);
         TraceRayVectorPool.set_values(4, emittedLight.x * rayColor.x, emittedLight.y * rayColor.y, emittedLight.z * rayColor.z);
         const emission = TraceRayVectorPool.get(4);
+        TraceRayVectorPool.set(5, incomingLight.add(emission))
+        const incomingLightTemporary = TraceRayVectorPool.get(5);
+        TraceRayVectorPool.set(0, incomingLightTemporary);
         incomingLight = incomingLight.add(emission);
         TraceRayVectorPool.set_values(1, rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
 
@@ -381,7 +384,8 @@ class Renderer {
 
       // If no intersection, return background color
       if (!closestIntersection) {
-        let BackgroundColor = getBackgroundColor(ray);
+        TraceRayVectorPool.set(9, getBackgroundColor(ray));
+        let BackgroundColor = TraceRayVectorPool.get(9);
         return new wasm.Vector(rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z);
       }
 

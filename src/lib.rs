@@ -1,3 +1,7 @@
+extern crate console_error_panic_hook;
+
+use core::panic;
+
 use wasm_bindgen::prelude::*;
 
 // Rust Vector struct
@@ -109,45 +113,51 @@ impl VectorPool {
     // Create a new VectorPool with a specified capacity
     #[wasm_bindgen(constructor)]
     pub fn new(capacity: usize) -> Self {
-        let pool = Vec::with_capacity(capacity);
+        init_panic_hook();
+
+        let mut pool = Vec::with_capacity(capacity);
+        for _ in 0..capacity {
+            // Initialize the pool with default Vector instances
+            pool.push(Vector { x: 0.0, y: 0.0, z: 0.0 });
+        }
         Self { pool }
     }
 
     // Get a Vector from the pool by index, or allocate a new one if the pool is empty
-    pub fn get(&mut self, index: usize) -> Vector {
-        if index < self.pool.len() {
+    pub fn get(&self, index: usize) -> Vector {
+        if !self.pool.is_empty() && index < self.pool.len() {
             self.pool[index]
         } else {
-            // You might want to handle the case when the pool is empty differently
-            Vector { x: 0.0, y: 0.0, z: 0.0 }
+            // Optionally you could handle an out-of-bounds index
+            panic!("Index out of bounds: {}", index);
+
         }
     }
 
     // Set a specific index to a Vector to update the values of a specific Vector in the pool
     pub fn set(&mut self, index: usize, values: Vector) {
-        if index < self.pool.len() {
+        if !self.pool.is_empty() && index < self.pool.len() {
             self.pool[index] = values;
         } else {
-            // Optionally we could handle an out-of-bounds index
-            println!("Index out of bounds: {}", index);
+            // Optionally you could handle an out-of-bounds index
+            panic!("Index out of bounds: {}", index);
         }
     }
 
     // Set a specific index to some new values to update the values of a specific Vector in the pool
     pub fn set_values(&mut self, index: usize, x: f64, y: f64, z: f64) {
-        if index < self.pool.len() {
-            let vector = &mut self.pool[index];
-            vector.x = x;
-            vector.y = y;
-            vector.z = z;
+        if !self.pool.is_empty() && index < self.pool.len() {
+            self.pool[index].x = x;
+            self.pool[index].y = y;
+            self.pool[index].z = z;
         } else {
-            // Optionally we could handle an out-of-bounds index
-            println!("Index out of bounds: {}", index);
+            // Optionally you could handle an out-of-bounds index
+            panic!("Index out of bounds: {}", index);
         }
     }
+}
 
-    // // Return a Vector to the pool by pushing it back
-    // pub fn return_to_pool(&mut self, vector: Vector) {
-    //     self.pool.push(vector);
-    // }
+#[wasm_bindgen]
+pub fn init_panic_hook() {
+    console_error_panic_hook::set_once();
 }
