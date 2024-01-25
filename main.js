@@ -353,6 +353,9 @@ class Renderer {
         }
       }
 
+      let incomingLight = TraceRayVectorPool.get(0);
+      let rayColor = TraceRayVectorPool.get(1);
+
       if (closestIntersection) {
         const intersectionPoint = closestIntersection.intersectionPoint;
         const object = closestIntersection.intersectionObject;
@@ -371,9 +374,6 @@ class Renderer {
         const emittedLight = TraceRayVectorPool.get(3);
         TraceRayVectorPool.set_values(4, emittedLight.x * rayColor.x, emittedLight.y * rayColor.y, emittedLight.z * rayColor.z);
         const emission = TraceRayVectorPool.get(4);
-        TraceRayVectorPool.set(5, incomingLight.add(emission))
-        const incomingLightTemporary = TraceRayVectorPool.get(5);
-        TraceRayVectorPool.set(0, incomingLightTemporary);
         incomingLight = incomingLight.add(emission);
         TraceRayVectorPool.set_values(1, rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
 
@@ -384,9 +384,10 @@ class Renderer {
 
       // If no intersection, return background color
       if (!closestIntersection) {
-        TraceRayVectorPool.set(9, getBackgroundColor(ray));
-        let BackgroundColor = TraceRayVectorPool.get(9);
-        return new wasm.Vector(rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z);
+        TraceRayVectorPool.set(8, getBackgroundColor(ray));
+        let BackgroundColor = TraceRayVectorPool.get(8);
+        TraceRayVectorPool.set_values(9, rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z)
+        return TraceRayVectorPool.get(9);
       }
 
       closestIntersection = null;
@@ -411,7 +412,7 @@ class Scene {
 
 // Define the settigns of the renderer
 const maxReflectionDepth = 10;
-const numSamples = 1;
+const numSamples = 5;
 const numFrames = 1;
 
 // Add the light source 
