@@ -3,7 +3,7 @@ import init, * as wasm from "./pkg/raytracer.js"
 
 await init();
 
-const TraceRayVectorPool = new wasm.VectorPool(10);
+const VectorPool = new wasm.VectorPool(100);
 
 // Get the canvas element and the 2d context
 const canvas = document.getElementById('canvas');
@@ -23,13 +23,12 @@ function getBackgroundColor(ray) {
   const t = 0.5 * (ray.direction.y + 1.0);
   
   // Linear gradient from white to blue
-  const white = new wasm.Vector(1, 1, 1);
-  const blue = new wasm.Vector(0.5, 0.7, 1.0);
+  VectorPool.set_values(50, 1, 1, 1);
+  const white = VectorPool.get(50);
+  VectorPool.set_values(55, 0.5, 0.7, 1.0);
+  const blue = VectorPool.get(55);
 
   const gradient = white.multiply(1.0 - t).add(blue.multiply(t))
-
-  white.free();
-  blue.free();
 
   return gradient;
 }
@@ -63,7 +62,8 @@ class Utils {
       const y = this.RandomValue(state += 13146368) * 2 - 1;
       const z = this.RandomValue(state += 23652568) * 2 - 1;
 
-      const pointInCube = new wasm.Vector(x, y, z);
+      VectorPool.set_values(40, x, y, z);
+      const pointInCube = VectorPool.get(40);
       const sqrDstFromCenter = pointInCube.dot(pointInCube);
 
       // If point is inside sphere, scale it to lie on the surface (otherwise, keep trying)
@@ -76,7 +76,8 @@ class Utils {
   }
 
   static RandomHemisphereDirection(normal, state) {
-    const direction = this.RandomDirection(state);
+    VectorPool.set(45, this.RandomDirection(state));
+    const direction = VectorPool.get(45);
     return direction.multiply(Math.sign(normal.dot(direction)));
   }
 }
@@ -210,13 +211,19 @@ class Cube {
     // Identify the face closest to the point and assign the normal accordingly
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > Math.abs(dz)) {
       // Point is on the face with the largest x-coordinate differance
-      return new wasm.Vector(Math.sign(dx), 0, 0);
+      VectorPool.set_values(30, Math.sign(dx), 0, 0);
+      const normal = VectorPool.get(30);
+      return normal;
     } else if (Math.abs(dy) > Math.abs(dz)) {
       // Point is on the face with the largest y-coordinate differance
-      return new wasm.Vector(0, Math.sign(dy), 0);
+      VectorPool.set_values(30, 0, Math.sign(dy), 0);
+      const normal = VectorPool.get(30);
+      return normal;
     } else {
       // Point is on the face with the largest z-coordinate differance
-      return new wasm.Vector(0, 0, Math.sign(dz));
+      VectorPool.set_values(30, 0, 0, Math.sign(dz));
+      const normal = VectorPool.get(30);
+      return normal;
     }
   }
 }
@@ -256,7 +263,8 @@ class Renderer {
           state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
 
           // Call the PerPixel method to get the color at the pixel
-          let color = this.PerPixel(x, y, state);
+          VectorPool.set(0, this.PerPixel(x, y, state));
+          let color = VectorPool.get(0);
 
           // Set the pixel color in ImageData
           data[i] = color.x * 255;
@@ -285,7 +293,8 @@ class Renderer {
   // Method to render each pixel
   PerPixel(x, y, state) {
     // Make the accumulateColor variable
-    let accumulatedColor = new wasm.Vector(0, 0, 0);
+    VectorPool.set_values(10, 0, 0, 0);
+    let accumulatedColor = VectorPool.get(10);
 
     for (let sample = 0; sample < numSamples; sample++) {
       // Calculate jittered sample position within the pixel
@@ -297,20 +306,23 @@ class Renderer {
       const sampleY = y + (sample + jitterY) / numSamples;
       
       // Create a ray from the camera to the current pixel
-      const rayOrigin = new wasm.Vector(0, 0, 0);
+      VectorPool.set_values(11, 0, 0, 0);
+      const rayOrigin = VectorPool.get(11);
       const aspectRatio = canvas.width / canvas.height;
-      const rayDirection = new wasm.Vector(
+      VectorPool.set_values(12, 
         (sampleX / canvas.width) * 2 - 1,
         ((sampleY / canvas.height) * 2 - 1) / aspectRatio,
         -1
-      ).normalize(); // Normalize the direction vector
+      );
+      const rayDirection = VectorPool.get(12).normalize(); // Normalize the direction vector
       const ray = new Ray(rayOrigin, rayDirection);
 
       // Get the state for the number generator
       state = Utils.RandomValue(sample * (sample + 568) * (sample + 234) * (sample + 345) * (sample + 123));
 
       // Trace the ray to get the color
-      const color = this.TraceRay(ray, sampleX, sampleY, state);
+      VectorPool.set(13, this.TraceRay(ray, sampleX, sampleY, state));
+      const color = VectorPool.get(13);
 
       // Accumulate the color
       accumulatedColor = accumulatedColor.add(color);
@@ -327,10 +339,10 @@ class Renderer {
     const pixelIndex = y * numPixels + x;
     state += pixelIndex * 485732;
 
-    TraceRayVectorPool.set_values(0, 0, 0, 0);
-    let incomingLight = TraceRayVectorPool.get(0);
-    TraceRayVectorPool.set_values(1, 1, 1, 1);
-    let rayColor = TraceRayVectorPool.get(1);
+    VectorPool.set_values(20, 0, 0, 0);
+    let incomingLight = VectorPool.get(20);
+    VectorPool.set_values(21, 1, 1, 1);
+    let rayColor = VectorPool.get(21);
 
     let closestIntersection = null;
 
@@ -353,16 +365,16 @@ class Renderer {
         }
       }
 
-      let incomingLight = TraceRayVectorPool.get(0);
-      let rayColor = TraceRayVectorPool.get(1);
+      let incomingLight = VectorPool.get(20);
+      let rayColor = VectorPool.get(21);
 
       if (closestIntersection) {
         const intersectionPoint = closestIntersection.intersectionPoint;
         const object = closestIntersection.intersectionObject;
 
         // Get the normal on the object
-        TraceRayVectorPool.set(2, object.calculateNormal(intersectionPoint));
-        const normal = TraceRayVectorPool.get(2);
+        VectorPool.set(22, object.calculateNormal(intersectionPoint));
+        const normal = VectorPool.get(22);
 
         // Update the origin and direction of the ray for the next iteration
         ray.origin = intersectionPoint;
@@ -370,12 +382,12 @@ class Renderer {
 
         // Calculate the incoming light
         const material = object.material;
-        TraceRayVectorPool.set(3, material.emittedColor.multiply(material.lightStrength));
-        const emittedLight = TraceRayVectorPool.get(3);
-        TraceRayVectorPool.set_values(4, emittedLight.x * rayColor.x, emittedLight.y * rayColor.y, emittedLight.z * rayColor.z);
-        const emission = TraceRayVectorPool.get(4);
+        VectorPool.set(23, material.emittedColor.multiply(material.lightStrength));
+        const emittedLight = VectorPool.get(23);
+        VectorPool.set_values(24, emittedLight.x * rayColor.x, emittedLight.y * rayColor.y, emittedLight.z * rayColor.z);
+        const emission = VectorPool.get(24);
         incomingLight = incomingLight.add(emission);
-        TraceRayVectorPool.set_values(1, rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
+        VectorPool.set_values(21, rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
 
         if (object.material.lightStrength > 0) {
           return incomingLight;
@@ -384,10 +396,10 @@ class Renderer {
 
       // If no intersection, return background color
       if (!closestIntersection) {
-        TraceRayVectorPool.set(8, getBackgroundColor(ray));
-        let BackgroundColor = TraceRayVectorPool.get(8);
-        TraceRayVectorPool.set_values(9, rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z)
-        return TraceRayVectorPool.get(9);
+        VectorPool.set(28, getBackgroundColor(ray));
+        let BackgroundColor = VectorPool.get(28);
+        VectorPool.set_values(29, rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z);
+        return VectorPool.get(29);
       }
 
       closestIntersection = null;
