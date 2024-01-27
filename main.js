@@ -35,18 +35,6 @@ function getBackgroundColor(ray) {
 
 // Utility class for vector and ray operations
 class Utils {
-  // Function to generate a random point on a sphere
-  static randomPointOnSphere() {
-    const theta = Math.random() * 2 * Math.PI;
-    const phi = Math.acos(2 * Math.random() - 1);
-
-    const x = Math.sin(phi) * Math.cos(theta);
-    const y = Math.sin(phi) * Math.sin(theta);
-    const z = Math.cos(phi);
-
-    return new wasm.Vector(x, y, z)
-  }
-
   // PCG (permuated congruentila generator). Thanks to:
   // www.pcg-random.org and www.shadertoy.com/view/XlGcRh
   static RandomValue(state) {
@@ -99,11 +87,6 @@ class Ray {
   constructor(origin, direction) {
     this.origin = origin;       // Vector representing the ray's origin
     this.direction = direction; // Vector representing the ray's direction
-  }
-
-  reflect(normal) {
-    const reflectedDirection = RandomHemishereDirection(normal, this.state);
-    return new this.constructor(this.origin, reflectedDirection);
   }
 
   // Function to get a point along the ray given a parameter t
@@ -201,8 +184,6 @@ class Cube {
 
   // Method to calculate the normal at a point on the cube
   calculateNormal(point) {
-    const halfSize = this.size.multiply(0.5);
-
     // Calculate the differences between the point's coordinates and the cube's center
     const dx = point.x - this.center.x;
     const dy = point.y - this.center.y;
