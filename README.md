@@ -19,7 +19,9 @@ Photon is a simple ray tracer implemented in JavaScript and Rust. It is designed
 
 4. **Multi-Threading:** Explore multi-threading or Web Workers to parallelize ray tracing computations for faster rendering.
 
-5. **Advanced Lighting Models:** Implement more sophisticated lighting models, such as physically-based rendering (PBR) and global illumination.
+5. **Shaders:** Explore shaders to improve performance by the use of the GPU for faster rendering.
+
+6. **Advanced Lighting Models:** Implement more sophisticated lighting models, such as physically-based rendering (PBR) and global illumination.
 
 ### How to Contribute
 
