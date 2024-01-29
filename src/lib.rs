@@ -5,6 +5,8 @@ use core::panic;
 use wasm_bindgen::{prelude::*, Clamped};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
 
+use rand::random;
+
 #[wasm_bindgen]
 pub fn init_panic_hook() {
     console_error_panic_hook::set_once();
@@ -429,7 +431,36 @@ impl Renderer {
     }
 
     pub fn per_pixel(&self, x: f64, y: f64, state: u32) -> Vector {
-        todo!("Add implementation for PerPixel");
+        // Initialize the accumlateColor Vector
+        let mut accumulated_color = Vector::new(0.0, 0.0, 0.0);
+
+        for sample in 0..10 {
+            // Calculate the jittered sample position within the pixel
+            let jitter_x: f64 = (random::<f64>() - 0.5) / 2.0;
+            let jitter_y: f64 = (random::<f64>() - 0.5) / 2.0;
+
+            // Calculate pixel coordinates for the jittered sample
+            let sample_x: f64 = x + (sample as f64 + jitter_x) / 10 as f64;
+            let sample_y: f64 = y + (sample as f64 + jitter_y) / 10 as f64;
+
+            // Create a ray from the camera to the current pixel
+            let aspect_ratio = self.canvas.width() as f64 / self.canvas.height() as f64;
+            let ray_origin = Vector::new(0.0, 0.0, 0.0);
+            let ray_direction = Vector::new(
+                (sample_x / self.canvas.width() as f64) * 2.0 - 1.0,
+                ((sample_y / self.canvas.height() as f64) * 2.0 - 1.0) / aspect_ratio,
+                -1.0
+            );
+            let ray = Ray::new(ray_origin, ray_direction);
+
+            // Trace the ray to get the color
+            let color = self.trace_ray(&ray, sample_x, sample_y, state);
+
+            // Accumulate the color
+            accumulated_color = accumulated_color.add(&color);
+        }
+
+        accumulated_color.divide(10.0)
     }
 
     pub fn trace_ray(&self, ray: &Ray, x: f64, y: f64, state: u32) -> Vector {
