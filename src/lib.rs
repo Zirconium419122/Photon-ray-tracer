@@ -66,12 +66,21 @@ impl Vector {
         }
     }
 
-    // Metod to multiply with a scalar
+    // Method to multiply with a scalar
     pub fn multiply(&self, scalar: f64) -> Vector {
         Vector {
             x: self.x * scalar,
             y: self.y * scalar,
             z: self.z * scalar,
+        }
+    }
+
+    // Method to multiply with a Vector
+    pub fn multiply_elementwise(&self, v: &Vector) -> Vector {
+        Vector {
+            x: self.x * v.x,
+            y: self.y * v.y,
+            z: self.z * v.z,
         }
     }
 
@@ -117,6 +126,47 @@ impl Vector {
             y: self.y / mag,
             z: self.z / mag,
         }
+    }
+}
+
+// Rust Random struct
+pub struct Random {
+    state: u32,
+}
+
+impl Random {
+    pub fn new(seed: u32) -> Random {
+        Random { state: seed }
+    }
+
+    pub fn random_value(&mut self) -> f64 {
+        self.state = self.state * 747796405 + 2891336453;
+        let mut result = ((self.state >> ((self.state >> 28) + 4)) ^ self.state) * 277803737;
+        result = (result >> 22) ^ result;
+        result as f64 / 4294967295.0
+    }
+
+    pub fn random_direction(&mut self) -> Vector {
+        for _ in 0..100 {
+            let x = self.random_value() * 2.0 - 1.0;
+            let y = self.random_value() * 2.0 - 1.0;
+            let z = self.random_value() * 2.0 - 1.0;
+
+            let point_in_cube = Vector {x, y, z};
+            let sqr_dst_from_center = point_in_cube.dot(&point_in_cube);
+
+            // If point is inside sphere, scale it to lie on the surface (otherwise, keep trying)
+            if sqr_dst_from_center <= 1.0 {
+                return point_in_cube.divide(f64::sqrt(sqr_dst_from_center));
+            }
+        }
+
+        Vector { x: 0.0, y: 0.0, z: 0.0 }
+    }
+
+    pub fn random_hemisphere_direction(&mut self, normal: &Vector) -> Vector {
+        let direction = self.random_direction();
+        direction.multiply(normal.dot(&direction).signum())
     }
 }
 
@@ -377,13 +427,18 @@ impl Renderer {
 
     pub fn render(&self, num_frames: u32) -> Result<ImageData, JsValue> {
         // Get canvas and context
-        let context = self.canvas
+        let context = self
+            .canvas
             .get_context("2d")?
             .unwrap()
             .dyn_into::<CanvasRenderingContext2d>()?;
 
         // Create the new ImageData object for direct pixel manipulation
-        let image_data = ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut []), self.canvas.width(), self.canvas.height())?;
+        let image_data = ImageData::new_with_u8_clamped_array_and_sh(
+            Clamped(&mut []),
+            self.canvas.width(),
+            self.canvas.height(),
+        )?;
 
         // Access the pixel data array
         let mut data = image_data.data();
@@ -391,7 +446,11 @@ impl Renderer {
         let mut state = 367380976;
         let max_state_value = 1e9;
 
-        let mut cumulative_image_data = ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut []), self.canvas.width(), self.canvas.width())?; 
+        let mut cumulative_image_data = ImageData::new_with_u8_clamped_array_and_sh(
+            Clamped(&mut []),
+            self.canvas.width(),
+            self.canvas.width(),
+        )?;
 
         // Recursively render the scene
         for frame in 0..num_frames {
@@ -401,7 +460,10 @@ impl Renderer {
             for y in 0..self.canvas.height() {
                 for x in 0..self.canvas.width() {
                     // Get the state for the number generator
-                    state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) as u32 % max_state_value as u32;
+                    state =
+                        ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1))
+                            as u32
+                            % max_state_value as u32;
 
                     // Call the per_pixel function to get the color at the pixel
                     let color = self.per_pixel(x as f64, y as f64, state);
@@ -418,10 +480,14 @@ impl Renderer {
 
             // Update the cumulativeImageData with averaging the pixel
             for i in 0..data.len() {
-                cumulative_image_data.data()[i] = cumulative_image_data.data()[i] + (data[i] / num_frames as u8);
+                cumulative_image_data.data()[i] =
+                    cumulative_image_data.data()[i] + (data[i] / num_frames as u8);
             }
 
-            console_log(&format!("Frame: {} ended with this state: {}", frame, state));
+            console_log(&format!(
+                "Frame: {} ended with this state: {}",
+                frame, state
+            ));
         }
 
         // Put the modified ImageData back to the canvas
@@ -449,12 +515,12 @@ impl Renderer {
             let ray_direction = Vector::new(
                 (sample_x / self.canvas.width() as f64) * 2.0 - 1.0,
                 ((sample_y / self.canvas.height() as f64) * 2.0 - 1.0) / aspect_ratio,
-                -1.0
+                -1.0,
             );
-            let ray = Ray::new(ray_origin, ray_direction);
+            let mut ray = Ray::new(ray_origin, ray_direction);
 
             // Trace the ray to get the color
-            let color = self.trace_ray(&ray, sample_x, sample_y, state);
+            let color = self.trace_ray(&mut ray, sample_x, sample_y, state);
 
             // Accumulate the color
             accumulated_color = accumulated_color.add(&color);
@@ -463,7 +529,67 @@ impl Renderer {
         accumulated_color.divide(10.0)
     }
 
-    pub fn trace_ray(&self, ray: &Ray, x: f64, y: f64, state: u32) -> Vector {
-        todo!("Add implementation for TraceRay");
+    pub fn trace_ray(&self, ray: &mut Ray, x: f64, y: f64, state: u32) -> Vector {
+        // Create seed for random number generator
+        let num_pixels = self.canvas.width() * self.canvas.height();
+        let pixel_index = (y * self.canvas.width() as f64 + x) as u32;
+        let state = state + pixel_index * 485732;
+
+        let mut incoming_light = Vector::new(0.0, 0.0, 0.0);
+        let mut ray_color = Vector::new(1.0, 1.0, 1.0);
+
+        let mut random = Random::new(state);
+
+        let closest_intersection: Option<Intersection<Sphere>> = None;
+
+        // Recursively reflect the ray
+        for _ in 0..10 {
+            // Test for intersection with objects in the scene
+            for sphere in &self.scene.spheres {
+                if let Some(intersection_result) = sphere.intersect(&ray) {
+                    if closest_intersection.is_none()
+                        || intersection_result.t < closest_intersection.unwrap().t
+                    {
+                        let closest_intersection: Option<Intersection<Sphere>> =
+                            Some(intersection_result);
+                    }
+                }
+            }
+
+            for cube in &self.scene.cubes {
+                if let Some(intersection_result) = cube.intersect(&ray) {
+                    if closest_intersection.is_none()
+                        || intersection_result.t < closest_intersection.unwrap().t
+                    {
+                        let closest_intersection: Option<Intersection<Cube>> = Some(intersection_result);
+                    }
+                }
+            }
+
+            if let Some(intersection) = closest_intersection.clone() {
+                let intersection_point = intersection.intersection_point;
+                let object = &intersection.intersection_object;
+
+                // Get the normal on the object
+                let normal = object.calculate_normal(&intersection_point); // Implement this method
+
+                // Update the origin and direction of the ray for the next iteration
+                ray.origin = intersection_point;
+                ray.direction = random.random_hemisphere_direction(&normal);
+
+                // Calculate the incoming light
+                let emitted_light = object.material.emission_color.multiply(object.material.emission_power);
+                let emission = emitted_light.multiply_elementwise(&ray_color);
+                incoming_light = incoming_light.add(&emission);
+
+                ray_color = ray_color.multiply_elementwise(&object.material.color);
+
+                if object.material.emission_power > 0.0 {
+                    return incoming_light;
+                }
+            }
+        }
+
+        incoming_light
     }
 }
