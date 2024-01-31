@@ -27,6 +27,8 @@ Photon is a simple ray tracer implemented in JavaScript and Rust. It is designed
 
 8. **Scene Editor:** Implement a scene editor where you can add and adjust the size and material of the objects in the scene.
 
+9. **Ui:** A simple Ui for adjusting rendering settings, like number of samples, number of frames, and the number of reflections
+
 ### How to Contribute
 
 If you have ideas for additional features or improvements, feel free to open an issue to discuss or create a pull request to contribute directly. Your feedback and contributions are highly appreciated!
