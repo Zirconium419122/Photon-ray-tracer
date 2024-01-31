@@ -225,6 +225,17 @@ impl Ray {
     pub fn point_at_parameter(&self, t: f64) -> Vector {
         self.origin.add(&self.direction.multiply(t))
     }
+
+    pub fn get_background_color(&self) -> Vector {
+        let t = 0.5 * (self.direction.y + 1.0);
+    
+        let white = Vector::new(1.0, 1.0, 1.0);
+        let blue = Vector::new(0.5, 0.7, 1.0);
+    
+        let gradient = white.multiply(1.0 - t).add(&blue.multiply(t));
+    
+        gradient
+    }
 }
 
 // Rust Sphere struct
@@ -540,28 +551,28 @@ impl Renderer {
 
         let mut random = Random::new(state);
 
-        let closest_intersection: Option<Intersection<Sphere>> = None;
+        let closest_intersection_sphere: Option<Intersection<Sphere>> = None;
+        let closest_intersection_cube: Option<Intersection<Cube>> = None;
 
         // Recursively reflect the ray
         for _ in 0..10 {
             // Test for intersection with objects in the scene
             for sphere in &self.scene.spheres {
                 if let Some(intersection_result) = sphere.intersect(&ray) {
-                    if closest_intersection.is_none()
-                        || intersection_result.t < closest_intersection.unwrap().t
+                    if closest_intersection_sphere.is_none()
+                        || intersection_result.t < closest_intersection_sphere.unwrap().t
                     {
-                        let closest_intersection: Option<Intersection<Sphere>> =
-                            Some(intersection_result);
+                        closest_intersection_sphere = Some(intersection_result);
                     }
                 }
             }
 
             for cube in &self.scene.cubes {
                 if let Some(intersection_result) = cube.intersect(&ray) {
-                    if closest_intersection.is_none()
-                        || intersection_result.t < closest_intersection.unwrap().t
+                    if closest_intersection_cube.is_none()
+                        || intersection_result.t < closest_intersection_cube.unwrap().t
                     {
-                        let closest_intersection: Option<Intersection<Cube>> = Some(intersection_result);
+                        closest_intersection_cube = Some(intersection_result);
                     }
                 }
             }
@@ -587,6 +598,9 @@ impl Renderer {
                 if object.material.emission_power > 0.0 {
                     return incoming_light;
                 }
+            } else {
+                let BackgroundColor = ray.get_background_color();
+                return ray_color.multiply_elementwise(&BackgroundColor);
             }
         }
 
