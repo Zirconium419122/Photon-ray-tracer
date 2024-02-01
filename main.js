@@ -17,36 +17,8 @@ const data = imageData.data;
 canvas.width = 800;  // Replace 800 with your desired width
 canvas.height = 600; // Replace 600 with your desired height
 
-// Get background color
-function getBackgroundColor(ray) {
-  // Map the vertical position of the ray to a gradient color
-  const t = 0.5 * (ray.direction.y + 1.0);
-  
-  // Linear gradient from white to blue
-  VectorPool.set_values(50, 1, 1, 1);
-  const white = VectorPool.get(50);
-  VectorPool.set_values(55, 0.5, 0.7, 1.0);
-  const blue = VectorPool.get(55);
-
-  const gradient = white.multiply(1.0 - t).add(blue.multiply(t))
-
-  return gradient;
-}
-
 // Utility class for vector and ray operations
 class Utils {
-  // Function to generate a random point on a sphere
-  static randomPointOnSphere() {
-    const theta = Math.random() * 2 * Math.PI;
-    const phi = Math.acos(2 * Math.random() - 1);
-
-    const x = Math.sin(phi) * Math.cos(theta);
-    const y = Math.sin(phi) * Math.sin(theta);
-    const z = Math.cos(phi);
-
-    return new wasm.Vector(x, y, z)
-  }
-
   // PCG (permuated congruentila generator). Thanks to:
   // www.pcg-random.org and www.shadertoy.com/view/XlGcRh
   static RandomValue(state) {
@@ -101,15 +73,26 @@ class Ray {
     this.direction = direction; // Vector representing the ray's direction
   }
 
-  reflect(normal) {
-    const reflectedDirection = RandomHemishereDirection(normal, this.state);
-    return new this.constructor(this.origin, reflectedDirection);
-  }
-
   // Function to get a point along the ray given a parameter t
   pointAtParameter(t) {
     return this.origin.add(this.direction.multiply(t));
   }
+
+  // Function to get the background color
+  getBackgroundColor() {
+  // Map the vertical position of the ray to a gradient color
+  const t = 0.5 * (this.direction.y + 1.0);
+  
+  // Linear gradient from white to blue
+  VectorPool.set_values(50, 1, 1, 1);
+  const white = VectorPool.get(50);
+  VectorPool.set_values(55, 0.5, 0.7, 1.0);
+  const blue = VectorPool.get(55);
+
+  const gradient = white.multiply(1.0 - t).add(blue.multiply(t))
+
+  return gradient;
+}
 }
 
 
@@ -201,8 +184,6 @@ class Cube {
 
   // Method to calculate the normal at a point on the cube
   calculateNormal(point) {
-    const halfSize = this.size.multiply(0.5);
-
     // Calculate the differences between the point's coordinates and the cube's center
     const dx = point.x - this.center.x;
     const dy = point.y - this.center.y;
@@ -396,7 +377,7 @@ class Renderer {
 
       // If no intersection, return background color
       if (!closestIntersection) {
-        VectorPool.set(28, getBackgroundColor(ray));
+        VectorPool.set(28, ray.getBackgroundColor());
         let BackgroundColor = VectorPool.get(28);
         VectorPool.set_values(29, rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z);
         return VectorPool.get(29);
