@@ -185,6 +185,14 @@ pub enum IntersectionType {
     Cube,
 }
 
+// Rust IntersectionObject enum
+#[derive(Debug, Copy, Clone)]
+pub enum IntersectionObject {
+    Sphere(Option<Intersection<Sphere>>),
+    Cube(Option<Intersection<Cube>>),
+    None
+}
+
 // Rust Intersections struct for holding the closest intersection of each type
 #[derive(Debug, Copy, Clone)]
 pub struct Intersections {
@@ -215,11 +223,11 @@ impl Intersections {
     }
 
     // Method / Function to get the closer intersection
-    pub fn get_closer_intersection(&self) -> Option<Intersection<T>> {
+    pub fn get_closer_intersection(&self) -> IntersectionObject {
         match self.closer_type {
-            Some(IntersectionType::Sphere) => self.sphere_intersection,
-            Some(IntersectionType::Cube) => self.cube_intersection,
-            None => None,
+            Some(IntersectionType::Sphere) => IntersectionObject::Sphere(self.sphere_intersection),
+            Some(IntersectionType::Cube) => IntersectionObject::Cube(self.cube_intersection),
+            None => IntersectionObject::None,
         }
     }
 }
@@ -627,7 +635,7 @@ impl Renderer {
             let closest_intersections: Intersections = Intersections::new(closest_intersection_sphere, closest_intersection_cube);
             closest_intersections.determine_closer();
 
-            if let Some(intersection) = closest_intersections.get_closer_intersection()  {
+            if let Some(intersection) = closest_intersections.get_closer_intersection() {
                 let intersection_point = intersection.intersection_point;
                 let object = &intersection.intersection_object;
 
