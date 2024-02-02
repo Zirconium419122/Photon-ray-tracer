@@ -244,8 +244,7 @@ class Renderer {
           state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
 
           // Call the PerPixel method to get the color at the pixel
-          VectorPool.set(0, this.PerPixel(x, y, state));
-          let color = VectorPool.get(0);
+          let color = this.PerPixel(x, y, state);
 
           // Set the pixel color in ImageData
           data[i] = color.x * 255;
@@ -365,10 +364,10 @@ class Renderer {
         const material = object.material;
         VectorPool.set(23, material.emittedColor.multiply(material.lightStrength));
         const emittedLight = VectorPool.get(23);
-        VectorPool.set_values(24, emittedLight.x * rayColor.x, emittedLight.y * rayColor.y, emittedLight.z * rayColor.z);
+        VectorPool.set(24, emittedLight.multiply_elementwise(rayColor));
         const emission = VectorPool.get(24);
         incomingLight = incomingLight.add(emission);
-        VectorPool.set_values(21, rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
+        VectorPool.set(21, rayColor.multiply_elementwise(material.color));
 
         if (object.material.lightStrength > 0) {
           return incomingLight;
@@ -379,7 +378,7 @@ class Renderer {
       if (!closestIntersection) {
         VectorPool.set(28, ray.getBackgroundColor());
         let BackgroundColor = VectorPool.get(28);
-        VectorPool.set_values(29, rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z);
+        VectorPool.set(29, rayColor.multiply_elementwise(BackgroundColor));
         return VectorPool.get(29);
       }
 

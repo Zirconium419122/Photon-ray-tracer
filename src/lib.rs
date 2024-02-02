@@ -46,12 +46,21 @@ impl Vector {
         }
     }
 
-    // Metod to multiply with a scalar
+    // Method to multiply with a scalar
     pub fn multiply(&self, scalar: f64) -> Vector {
         Vector {
             x: self.x * scalar,
             y: self.y * scalar,
             z: self.z * scalar,
+        }
+    }
+
+    // Method to multiply with a Vector
+    pub fn multiply_elementwise(&self, v: &Vector) -> Vector {
+        Vector {
+            x: self.x * v.x,
+            y: self.y * v.y,
+            z: self.z * v.z,
         }
     }
 
