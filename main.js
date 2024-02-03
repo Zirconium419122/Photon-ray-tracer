@@ -17,6 +17,22 @@ const data = imageData.data;
 canvas.width = 800;  // Replace 800 with your desired width
 canvas.height = 600; // Replace 600 with your desired height
 
+// Get background color
+function getBackgroundColor(ray) {
+  // Map the vertical position of the ray to a gradient color
+  const t = 0.5 * (ray.direction.y + 1.0);
+  
+  // Linear gradient from white to blue
+  VectorPool.set_values(50, 1, 1, 1);
+  const white = VectorPool.get(50);
+  VectorPool.set_values(55, 0.5, 0.7, 1.0);
+  const blue = VectorPool.get(55);
+
+  const gradient = white.multiply(1.0 - t).add(blue.multiply(t))
+
+  return gradient;
+}
+
 // Utility class for vector and ray operations
 class Utils {
   // PCG (permuated congruentila generator). Thanks to:
@@ -77,22 +93,6 @@ class Ray {
   pointAtParameter(t) {
     return this.origin.add(this.direction.multiply(t));
   }
-
-  // Function to get the background color
-  getBackgroundColor() {
-  // Map the vertical position of the ray to a gradient color
-  const t = 0.5 * (this.direction.y + 1.0);
-  
-  // Linear gradient from white to blue
-  VectorPool.set_values(50, 1, 1, 1);
-  const white = VectorPool.get(50);
-  VectorPool.set_values(55, 0.5, 0.7, 1.0);
-  const blue = VectorPool.get(55);
-
-  const gradient = white.multiply(1.0 - t).add(blue.multiply(t))
-
-  return gradient;
-}
 }
 
 
@@ -244,7 +244,8 @@ class Renderer {
           state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
 
           // Call the PerPixel method to get the color at the pixel
-          let color = this.PerPixel(x, y, state);
+          VectorPool.set(0, this.PerPixel(x, y, state));
+          let color = VectorPool.get(0);
 
           // Set the pixel color in ImageData
           data[i] = color.x * 255;
@@ -328,8 +329,8 @@ class Renderer {
 
     // Recursivly reflect the ray
     for (let i = 0; i < maxReflectionDepth; i++) {
-      // // Change the state every reflection
-      // state += 243723;
+      // Change the state every reflection
+      state += 243723;
 
       // Test for intersections with objects in the scene
       for (const object of this.scene.objects) {
@@ -364,10 +365,10 @@ class Renderer {
         const material = object.material;
         VectorPool.set(23, material.emittedColor.multiply(material.lightStrength));
         const emittedLight = VectorPool.get(23);
-        VectorPool.set(24, emittedLight.multiply_elementwise(rayColor));
+        VectorPool.set_values(24, emittedLight.x * rayColor.x, emittedLight.y * rayColor.y, emittedLight.z * rayColor.z);
         const emission = VectorPool.get(24);
         incomingLight = incomingLight.add(emission);
-        VectorPool.set(21, rayColor.multiply_elementwise(material.color));
+        VectorPool.set_values(21, rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
 
         if (object.material.lightStrength > 0) {
           return incomingLight;
@@ -376,9 +377,9 @@ class Renderer {
 
       // If no intersection, return background color
       if (!closestIntersection) {
-        VectorPool.set(28, ray.getBackgroundColor());
+        VectorPool.set(28, getBackgroundColor(ray));
         let BackgroundColor = VectorPool.get(28);
-        VectorPool.set(29, rayColor.multiply_elementwise(BackgroundColor));
+        VectorPool.set_values(29, rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z);
         return VectorPool.get(29);
       }
 
