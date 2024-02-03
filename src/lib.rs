@@ -606,8 +606,8 @@ impl Renderer {
 
         let mut random = Random::new(state);
 
-        let closest_intersection_sphere: Option<Intersection<Sphere>> = None;
-        let closest_intersection_cube: Option<Intersection<Cube>> = None;
+        let mut closest_intersection_sphere: Option<Intersection<Sphere>> = None;
+        let mut closest_intersection_cube: Option<Intersection<Cube>> = None;
 
         // Recursively reflect the ray
         for _ in 0..10 {
@@ -632,34 +632,59 @@ impl Renderer {
                 }
             }
 
-            let closest_intersections: Intersections = Intersections::new(closest_intersection_sphere, closest_intersection_cube);
+            let mut closest_intersections: Intersections = Intersections::new(closest_intersection_sphere, closest_intersection_cube);
             closest_intersections.determine_closer();
 
-            if let Some(intersection) = closest_intersections.get_closer_intersection() {
-                let intersection_point = intersection.intersection_point;
-                let object = &intersection.intersection_object;
+            match closest_intersections.get_closer_intersection() {
+                IntersectionObject::Sphere(intersection_sphere) => {
+                    let intersection_point = intersection_sphere.unwrap().intersection_point;
+                    let object = &intersection_sphere.unwrap().intersection_object;
 
-                // Get the normal on the object
-                let normal = object.calculate_normal(&intersection_point); // Implement this method
+                    // Get the normal on the object
+                    let normal = object.calculate_normal(&intersection_point); // Implement this method
 
-                // Update the origin and direction of the ray for the next iteration
-                ray.origin = intersection_point;
-                ray.direction = random.random_hemisphere_direction(&normal);
+                    // Update the origin and direction of the ray for the next iteration
+                    ray.origin = intersection_point;
+                    ray.direction = random.random_hemisphere_direction(&normal);
 
-                // Calculate the incoming light
-                let emitted_light = object.material.emission_color.multiply(object.material.emission_power);
-                let emission = emitted_light.multiply_elementwise(&ray_color);
-                incoming_light = incoming_light.add(&emission);
+                    // Calculate the incoming light
+                    let emitted_light = object.material.emission_color.multiply(object.material.emission_power);
+                    let emission = emitted_light.multiply_elementwise(&ray_color);
+                    incoming_light = incoming_light.add(&emission);
 
-                ray_color = ray_color.multiply_elementwise(&object.material.color);
+                    ray_color = ray_color.multiply_elementwise(&object.material.color);
 
-                if object.material.emission_power > 0.0 {
-                    return incoming_light;
-                }
-            } else {
-                let BackgroundColor = ray.get_background_color();
-                return ray_color.multiply_elementwise(&BackgroundColor);
-            }
+                    if object.material.emission_power > 0.0 {
+                        return incoming_light;
+                    }
+                },
+                IntersectionObject::Cube(intersection_cube) => {
+                    let intersection_point = intersection_cube.unwrap().intersection_point;
+                    let object = &intersection_cube.unwrap().intersection_object;
+
+                    // Get the normal on the object
+                    let normal = object.calculate_normal(&intersection_point); // Implement this method
+
+                    // Update the origin and direction of the ray for the next iteration
+                    ray.origin = intersection_point;
+                    ray.direction = random.random_hemisphere_direction(&normal);
+
+                    // Calculate the incoming light
+                    let emitted_light = object.material.emission_color.multiply(object.material.emission_power);
+                    let emission = emitted_light.multiply_elementwise(&ray_color);
+                    incoming_light = incoming_light.add(&emission);
+
+                    ray_color = ray_color.multiply_elementwise(&object.material.color);
+
+                    if object.material.emission_power > 0.0 {
+                        return incoming_light;
+                    }
+                },
+                IntersectionObject::None => {
+                    let background_color = ray.get_background_color();
+                    return ray_color.multiply_elementwise(&background_color);
+                },
+            };
         }
 
         incoming_light
