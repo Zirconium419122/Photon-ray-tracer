@@ -28,7 +28,8 @@ function getBackgroundColor(ray) {
   VectorPool.set_values(55, 0.5, 0.7, 1.0);
   const blue = VectorPool.get(55);
 
-  const gradient = white.multiply(1.0 - t).add(blue.multiply(t))
+  VectorPool.set(56, white.multiply(1.0 - t).add(blue.multiply(t)));
+  const gradient = VectorPool.get(56);
 
   return gradient;
 }
