@@ -2,7 +2,7 @@ extern crate console_error_panic_hook;
 
 use core::panic;
 
-use wasm_bindgen::{prelude::*, Clamped};
+use wasm_bindgen::prelude::*;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
 
 use rand::random;
@@ -136,6 +136,8 @@ pub struct Random {
 
 impl Random {
     pub fn new(seed: u32) -> Random {
+        init_panic_hook();
+        
         Random { state: seed }
     }
 
@@ -204,6 +206,8 @@ pub struct Intersections {
 impl Intersections {
     // Method / Function to create a new Intersections struct
     pub fn new(sphere_intersection: Option<Intersection<Sphere>>, cube_intersection: Option<Intersection<Cube>>) -> Intersections {
+        init_panic_hook();
+        
         Intersections { sphere_intersection, cube_intersection, closer_type: None }
     }
     // Method / Function to determine the which intersection is closer
@@ -253,6 +257,8 @@ impl Material {
         emission_color: Vector,
         emission_power: f64,
     ) -> Material {
+        init_panic_hook();
+        
         Material {
             color,
             roughness,
@@ -274,6 +280,8 @@ pub struct Ray {
 impl Ray {
     #[wasm_bindgen(constructor)]
     pub fn new(origin: Vector, direction: Vector) -> Ray {
+        init_panic_hook();
+        
         Ray { origin, direction }
     }
 
@@ -306,6 +314,8 @@ pub struct Sphere {
 impl Sphere {
     #[wasm_bindgen(constructor)]
     pub fn new(center: Vector, radius: f64, material: Material) -> Sphere {
+        init_panic_hook();
+        
         Sphere {
             center,
             radius,
@@ -363,6 +373,8 @@ pub struct Cube {
 impl Cube {
     #[wasm_bindgen(constructor)]
     pub fn new(center: Vector, size: Vector, material: Material) -> Cube {
+        init_panic_hook();
+
         Cube {
             center,
             size,
@@ -449,6 +461,23 @@ impl Cube {
     }
 }
 
+// Rust Settings struct
+#[wasm_bindgen]
+#[derive(Debug, Copy, Clone)]
+pub struct Settings {
+    max_reflection_depth: u32,
+    num_samples: u32,
+    num_frames: u32,
+}
+
+#[wasm_bindgen]
+impl Settings {
+    #[wasm_bindgen(constructor)]
+    pub fn new(max_reflection_depth: u32, num_samples: u32, num_frames: u32) -> Settings {
+        Settings { max_reflection_depth, num_samples, num_frames }
+    }
+}
+
 // Rust Scene struct
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -461,6 +490,8 @@ pub struct Scene {
 impl Scene {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Scene {
+        init_panic_hook();
+
         Scene {
             spheres: Vec::new(),
             cubes: Vec::new(),
@@ -482,16 +513,19 @@ impl Scene {
 pub struct Renderer {
     canvas: HtmlCanvasElement,
     scene: Scene,
+    settings: Settings,
 }
 
 #[wasm_bindgen]
 impl Renderer {
     #[wasm_bindgen(constructor)]
-    pub fn new(canvas: HtmlCanvasElement, scene: Scene) -> Renderer {
-        Renderer { canvas, scene }
+    pub fn new(canvas: HtmlCanvasElement, scene: Scene, settings: Settings) -> Renderer {
+        init_panic_hook();
+
+        Renderer { canvas, scene, settings }
     }
 
-    pub fn render(&self, num_frames: u32) -> Result<ImageData, JsValue> {
+    pub fn render(&self) -> Result<ImageData, JsValue> {
         // Get canvas and context
         let context = self
             .canvas
@@ -500,8 +534,7 @@ impl Renderer {
             .dyn_into::<CanvasRenderingContext2d>()?;
 
         // Create the new ImageData object for direct pixel manipulation
-        let image_data = ImageData::new_with_u8_clamped_array_and_sh(
-            Clamped(&mut []),
+        let image_data = ImageData::new_with_sw(
             self.canvas.width(),
             self.canvas.height(),
         )?;
@@ -512,24 +545,20 @@ impl Renderer {
         let mut state = 367380976;
         let max_state_value = 1e9;
 
-        let mut cumulative_image_data = ImageData::new_with_u8_clamped_array_and_sh(
-            Clamped(&mut []),
+        let mut cumulative_image_data = ImageData::new_with_sw(
             self.canvas.width(),
             self.canvas.width(),
         )?;
 
         // Recursively render the scene
-        for frame in 0..num_frames {
+        for frame in 0..self.settings.num_frames {
             let mut i = 0;
 
             // Loop through each pixel on the canvas
             for y in 0..self.canvas.height() {
                 for x in 0..self.canvas.width() {
                     // Get the state for the number generator
-                    state =
-                        ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1))
-                            as u32
-                            % max_state_value as u32;
+                    state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) as u32 % max_state_value as u32;
 
                     // Call the per_pixel function to get the color at the pixel
                     let color = self.per_pixel(x as f64, y as f64, state);
@@ -538,21 +567,23 @@ impl Renderer {
                     data[i] = (color.x * 255.0) as u8;
                     data[i + 1] = (color.y * 255.0) as u8;
                     data[i + 2] = (color.z * 255.0) as u8;
-                    data[i + 4] = 255; // Alpha channel
+                    data[i + 3] = 255; // Alpha channel
 
                     i += 4;
                 }
+
+                console_log(
+                    &format!("Row number {} is complete", y)
+                );
             }
 
             // Update the cumulativeImageData with averaging the pixel
             for i in 0..data.len() {
-                cumulative_image_data.data()[i] =
-                    cumulative_image_data.data()[i] + (data[i] / num_frames as u8);
+                cumulative_image_data.data()[i] = cumulative_image_data.data()[i] + (data[i] / self.settings.num_frames as u8);
             }
 
             console_log(&format!(
-                "Frame: {} ended with this state: {}",
-                frame, state
+                "Frame: {} ended with this state: {}", frame, state
             ));
         }
 
@@ -566,7 +597,7 @@ impl Renderer {
         // Initialize the accumlateColor Vector
         let mut accumulated_color = Vector::new(0.0, 0.0, 0.0);
 
-        for sample in 0..10 {
+        for sample in 0..self.settings.num_samples {
             // Calculate the jittered sample position within the pixel
             let jitter_x: f64 = (random::<f64>() - 0.5) / 2.0;
             let jitter_y: f64 = (random::<f64>() - 0.5) / 2.0;
@@ -610,7 +641,7 @@ impl Renderer {
         let mut closest_intersection_cube: Option<Intersection<Cube>> = None;
 
         // Recursively reflect the ray
-        for _ in 0..10 {
+        for _ in 0..self.settings.max_reflection_depth {
             // Test for intersection with objects in the scene
             for sphere in &self.scene.spheres {
                 if let Some(intersection_result) = sphere.intersect(&ray) {
