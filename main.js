@@ -9,7 +9,7 @@ const ctx = canvas.getContext('2d');
 
 // Set the width and height of the canvas
 canvas.width = 800;  // Replace 800 with your desired width
-canvas.height = 600; // Replace 600 with your desired height
+canvas.height = 800; // Replace 600 with your desired height
 
 // Create ImageData object for direct pixel manipulation
 const imageData = ctx.createImageData(canvas.width, canvas.height);
@@ -23,7 +23,7 @@ async function run() {
     const settings = new wasm.Settings(maxReflectionDepth, numSamples, numFrames);
 
     // Add the light source 
-    const sphereCenter = new wasm.Vector(5, -5, -10);
+    const sphereCenter = new wasm.Vector(-5, -5, -10);
     const sphereRadius = 5;
     const sphereMaterial = new wasm.Material(
       new wasm.Vector(0, 0, 0),

@@ -550,6 +550,8 @@ impl Renderer {
             self.canvas.width(),
         )?;
 
+        let mut cumulative_data = cumulative_image_data.data();
+
         // Recursively render the scene
         for frame in 0..self.settings.num_frames {
             let mut i = 0;
@@ -579,7 +581,7 @@ impl Renderer {
 
             // Update the cumulativeImageData with averaging the pixel
             for i in 0..data.len() {
-                cumulative_image_data.data()[i] = cumulative_image_data.data()[i] + (data[i] / self.settings.num_frames as u8);
+                cumulative_data[i] = cumulative_data[i] + (data[i] / self.settings.num_frames as u8);
             }
 
             console_log(&format!(
@@ -587,8 +589,10 @@ impl Renderer {
             ));
         }
 
+        let final_image_data = ImageData::new_with_u8_clamped_array_and_sh(wasm_bindgen::Clamped(cumulative_data.as_slice()), self.canvas.width(), self.canvas.height())?;
+
         // Put the modified ImageData back to the canvas
-        context.put_image_data(&cumulative_image_data, 0.0, 0.0)?;
+        context.put_image_data(&final_image_data, 0.0, 0.0)?;
 
         Ok(cumulative_image_data)
     }
@@ -672,7 +676,7 @@ impl Renderer {
                     let object = &intersection_sphere.unwrap().intersection_object;
 
                     // Get the normal on the object
-                    let normal = object.calculate_normal(&intersection_point); // Implement this method
+                    let normal = object.calculate_normal(&intersection_point);
 
                     // Update the origin and direction of the ray for the next iteration
                     ray.origin = intersection_point;
@@ -694,7 +698,7 @@ impl Renderer {
                     let object = &intersection_cube.unwrap().intersection_object;
 
                     // Get the normal on the object
-                    let normal = object.calculate_normal(&intersection_point); // Implement this method
+                    let normal = object.calculate_normal(&intersection_point);
 
                     // Update the origin and direction of the ray for the next iteration
                     ray.origin = intersection_point;
@@ -711,7 +715,7 @@ impl Renderer {
                         return incoming_light;
                     }
                 },
-                IntersectionObject::None => {
+                IntersectionObject::None => {      
                     let background_color = ray.get_background_color();
                     return ray_color.multiply_elementwise(&background_color);
                 },
