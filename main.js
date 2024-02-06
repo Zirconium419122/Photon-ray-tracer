@@ -50,7 +50,8 @@ class Utils {
   static RandomHemisphereDirection(normal, state) {
     VectorPool.set(45, this.RandomDirection(state));
     const direction = VectorPool.get(45);
-    return direction.multiply(Math.sign(normal.dot(direction)));
+    VectorPool.set(46, direction.multiply(Math.sign(normal.dot(direction))));
+    return VectorPool.get(46);
   }
 }
 
@@ -408,54 +409,64 @@ const maxReflectionDepth = 10;
 const numSamples = 5;
 const numFrames = 1;
 
-// Add the light source 
-const sphereCenter = new wasm.Vector(-5, -5, -10);
-const sphereRadius = 5;
-const sphereMaterial = new Material(
-  new wasm.Vector(0, 0, 0),
-  0,
-  new wasm.Vector(1, 1, 1),
-  2
-);
-const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial)
+const scene = new Scene();
 
-console.log(sphere);
+// Add the light source 
+{
+  const sphereCenter = new wasm.Vector(-5, -5, -10);
+  const sphereRadius = 5;
+  const sphereMaterial = new Material(
+    new wasm.Vector(0, 0, 0),
+    0,
+    new wasm.Vector(1, 1, 1),
+    2
+  );
+  const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial)
+
+  scene.addObject(sphere);
+  console.log(sphere);
+}
 
 // Example usage
-const sphereCenter1 = new wasm.Vector(0, 0, -5);
-const sphereRadius1 = 1;
-const sphereMaterial1 = new Material(new wasm.Vector(1, 0, 0));
-const sphere1 = new Sphere(sphereCenter1, sphereRadius1, sphereMaterial1);
+{
+  const sphereCenter = new wasm.Vector(0, 0, -5);
+  const sphereRadius = 1;
+  const sphereMaterial = new Material(new wasm.Vector(1, 0, 0));
+  const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial);
 
-console.log(sphere1);
+  scene.addObject(sphere);
+  console.log(sphere);
+}
 
-const sphereCenter2 = new wasm.Vector(3, 1, -11);
-const sphereRadius2 = 1;
-const sphereMaterial2 = new Material(new wasm.Vector(0, 1, 0));
-const sphere2 = new Sphere(sphereCenter2, sphereRadius2, sphereMaterial2);
+{
+  const sphereCenter = new wasm.Vector(3, 1, -11);
+  const sphereRadius = 1;
+  const sphereMaterial = new Material(new wasm.Vector(0, 1, 0));
+  const sphere2 = new Sphere(sphereCenter, sphereRadius, sphereMaterial);
 
-console.log(sphere2);
+  scene.addObject(sphere2);
+  console.log(sphere2);
+}
 
-const sphereCenter3 = new wasm.Vector(0, 5, -5);
-const sphereRadius3 = 4.5;
-const sphereMaterial3 = new Material(new wasm.Vector(0.5, 0.5, 0.5));
-const sphere3 = new Sphere(sphereCenter3, sphereRadius3, sphereMaterial3);
+{
+  const sphereCenter = new wasm.Vector(0, 5, -5);
+  const sphereRadius = 4.5;
+  const sphereMaterial = new Material(new wasm.Vector(0.5, 0.5, 0.5));
+  const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial);
 
-console.log(sphere3);
+  scene.addObject(sphere);
+  console.log(sphere);
+}
 
-const cubeCenter = new wasm.Vector(-2, 1, -5);
-const cubeSize = new wasm.Vector(1, 1, 1);
-const cubeMaterial = new Material(new wasm.Vector(0, 0, 1));
-const cube = new Cube(cubeCenter, cubeSize, cubeMaterial);
+{
+  const cubeCenter = new wasm.Vector(-2, 1, -5);
+  const cubeSize = new wasm.Vector(1, 1, 1);
+  const cubeMaterial = new Material(new wasm.Vector(0, 0, 1));
+  const cube = new Cube(cubeCenter, cubeSize, cubeMaterial);
 
-console.log(cube);
-
-const scene = new Scene();
-scene.addObject(sphere);
-scene.addObject(sphere1);
-scene.addObject(sphere2);
-scene.addObject(sphere3);
-scene.addObject(cube);
+  scene.addObject(cube);
+  console.log(cube);
+}
 
 // Create the renderer
 const renderer = new Renderer(canvas, scene);
