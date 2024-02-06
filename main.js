@@ -8,8 +8,8 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 // Set the width and height of the canvas
-canvas.width = 800;  // Replace 800 with your desired width
-canvas.height = 800; // Replace 600 with your desired height
+canvas.width = 600;  // Replace 800 with your desired width
+canvas.height = 600; // Replace 600 with your desired height
 
 // Create ImageData object for direct pixel manipulation
 const imageData = ctx.createImageData(canvas.width, canvas.height);

@@ -1,6 +1,7 @@
 extern crate console_error_panic_hook;
 
 use core::panic;
+use std::ops::{Add, Sub, Mul, Div};
 
 use wasm_bindgen::prelude::*;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
@@ -48,57 +49,6 @@ impl Vector {
         self.z = z;
     }
 
-    // Method to add another vector
-    pub fn add(&self, v: &Vector) -> Vector {
-        Vector {
-            x: self.x + v.x,
-            y: self.y + v.y,
-            z: self.z + v.z,
-        }
-    }
-
-    // Method to subtract another vector
-    pub fn subtract(&self, v: &Vector) -> Vector {
-        Vector {
-            x: self.x - v.x,
-            y: self.y - v.y,
-            z: self.z - v.z,
-        }
-    }
-
-    // Method to multiply with a scalar
-    pub fn multiply(&self, scalar: f64) -> Vector {
-        Vector {
-            x: self.x * scalar,
-            y: self.y * scalar,
-            z: self.z * scalar,
-        }
-    }
-
-    // Method to multiply with a Vector
-    pub fn multiply_elementwise(&self, v: &Vector) -> Vector {
-        Vector {
-            x: self.x * v.x,
-            y: self.y * v.y,
-            z: self.z * v.z,
-        }
-    }
-
-    // Method to divide by a scalar
-    pub fn divide(&self, scalar: f64) -> Vector {
-        // Check for division by zero to avoid errors
-        if scalar != 0.0 {
-            Vector {
-                x: self.x / scalar,
-                y: self.y / scalar,
-                z: self.z / scalar,
-            }
-        } else {
-            // Handle division by zero gracefully
-            panic!("Division by zero!");
-        }
-    }
-
     // Method to calculate the dot product with another vector
     pub fn dot(&self, v: &Vector) -> f64 {
         self.x * v.x + self.y * v.y + self.z * v.z
@@ -125,6 +75,77 @@ impl Vector {
             x: self.x / mag,
             y: self.y / mag,
             z: self.z / mag,
+        }
+    }
+}
+
+// Method to add another vector
+impl Add for Vector {
+    type Output = Self;
+
+    fn add(self, v: Self) -> Self {
+        Self {
+            x: self.x + v.x,
+            y: self.y + v.y,
+            z: self.z + v.z,
+        }
+    }
+}
+
+// Method to subtract another vector
+impl Sub for Vector {
+    type Output = Self;
+
+    fn sub(self, v: Self) -> Self {
+        Self {
+            x: self.x - v.x,
+            y: self.y - v.y,
+            z: self.z - v.z,
+        }
+    }
+}
+
+// Method to multiply with a scalar
+impl Mul<f64> for Vector {
+    type Output = Self;
+
+    fn mul(self, scalar: f64) -> Self {
+        Self {
+            x: self.x * scalar,
+            y: self.y * scalar,
+            z: self.z * scalar,
+        }
+    }
+}
+
+// Method to multiply with a Vector
+impl Mul for Vector {
+    type Output = Self;
+
+    fn mul(self, v: Self) -> Self {
+        Self {
+            x: self.x * v.x,
+            y: self.y * v.y,
+            z: self.z * v.z,
+        }
+    }
+}
+
+// Method to divide by a scalar
+impl Div<f64> for Vector {
+    type Output = Self;
+
+    fn div(self, scalar: f64) -> Self {
+        // Check for division by zero to avoid errors
+        if scalar != 0.0 {
+            Self {
+                x: self.x / scalar,
+                y: self.y / scalar,
+                z: self.z / scalar,
+            }
+        } else {
+            // Handle division by zero gracefully
+            panic!("Division by zero!");
         }
     }
 }
@@ -159,7 +180,7 @@ impl Random {
 
             // If point is inside sphere, scale it to lie on the surface (otherwise, keep trying)
             if sqr_dst_from_center <= 1.0 {
-                return point_in_cube.divide(f64::sqrt(sqr_dst_from_center));
+                return point_in_cube / f64::sqrt(sqr_dst_from_center);
             }
         }
 
@@ -168,7 +189,7 @@ impl Random {
 
     pub fn random_hemisphere_direction(&mut self, normal: &Vector) -> Vector {
         let direction = self.random_direction();
-        direction.multiply(normal.dot(&direction).signum())
+        direction * normal.dot(&direction).signum()
     }
 }
 
@@ -240,6 +261,7 @@ impl Intersections {
 // Rust Material struct
 #[wasm_bindgen]
 #[derive(Debug, Copy, Clone)]
+#[allow(dead_code)]
 pub struct Material {
     color: Vector,  // RGB color/albedo of the material
     roughness: f64, // Reflection coefficient between 0 and 1, roughness zero means no reflections
@@ -286,7 +308,7 @@ impl Ray {
     }
 
     pub fn point_at_parameter(&self, t: f64) -> Vector {
-        self.origin.add(&self.direction.multiply(t))
+        self.origin.add(self.direction * t)
     }
 
     pub fn get_background_color(&self) -> Vector {
@@ -295,7 +317,7 @@ impl Ray {
         let white = Vector::new(1.0, 1.0, 1.0);
         let blue = Vector::new(0.5, 0.7, 1.0);
     
-        let gradient = white.multiply(1.0 - t).add(&blue.multiply(t));
+        let gradient = white * (1.0 - t) + (blue * t);
     
         gradient
     }
@@ -324,7 +346,7 @@ impl Sphere {
     }
 
     fn intersect(&self, ray: &Ray) -> Option<Intersection<Sphere>> {
-        let oc = ray.origin.subtract(&self.center);
+        let oc = ray.origin - self.center;
         let a = ray.direction.dot(&ray.direction);
         let b = oc.dot(&ray.direction) * 2.0;
         let c = oc.dot(&oc) - self.radius * self.radius;
@@ -356,7 +378,7 @@ impl Sphere {
     }
 
     fn calculate_normal(&self, point: &Vector) -> Vector {
-        point.subtract(&self.center).normalize()
+        (*point - self.center).normalize()
     }
 }
 
@@ -383,7 +405,7 @@ impl Cube {
     }
 
     fn intersect(&self, ray: &Ray) -> Option<Intersection<Cube>> {
-        let half_size = self.size.multiply(0.5);
+        let half_size = self.size * 0.5;
 
         // Calculate the minimum and maximum extents along each axis
         let min_x = self.center.x - half_size.x;
@@ -545,7 +567,7 @@ impl Renderer {
         let mut state = 367380976;
         let max_state_value = 1e9;
 
-        let mut cumulative_image_data = ImageData::new_with_sw(
+        let cumulative_image_data = ImageData::new_with_sw(
             self.canvas.width(),
             self.canvas.width(),
         )?;
@@ -589,10 +611,10 @@ impl Renderer {
             ));
         }
 
-        let final_image_data = ImageData::new_with_u8_clamped_array_and_sh(wasm_bindgen::Clamped(cumulative_data.as_slice()), self.canvas.width(), self.canvas.height())?;
+        let cumulative_image_data = ImageData::new_with_u8_clamped_array_and_sh(wasm_bindgen::Clamped(cumulative_data.as_slice()), self.canvas.width(), self.canvas.height())?;
 
         // Put the modified ImageData back to the canvas
-        context.put_image_data(&final_image_data, 0.0, 0.0)?;
+        context.put_image_data(&cumulative_image_data, 0.0, 0.0)?;
 
         Ok(cumulative_image_data)
     }
@@ -624,17 +646,17 @@ impl Renderer {
             let color = self.trace_ray(&mut ray, sample_x, sample_y, state);
 
             // Accumulate the color
-            accumulated_color = accumulated_color.add(&color);
+            accumulated_color = accumulated_color + color;
         }
 
-        accumulated_color.divide(10.0)
+        accumulated_color / self.settings.num_samples.into()
     }
 
     pub fn trace_ray(&self, ray: &mut Ray, x: f64, y: f64, state: u32) -> Vector {
         // Create seed for random number generator
         let num_pixels = self.canvas.width() * self.canvas.height();
         let pixel_index = (y * self.canvas.width() as f64 + x) as u32;
-        let state = state + pixel_index * 485732;
+        let state = state + num_pixels + pixel_index * 485732;
 
         let mut incoming_light = Vector::new(0.0, 0.0, 0.0);
         let mut ray_color = Vector::new(1.0, 1.0, 1.0);
@@ -683,11 +705,11 @@ impl Renderer {
                     ray.direction = random.random_hemisphere_direction(&normal);
 
                     // Calculate the incoming light
-                    let emitted_light = object.material.emission_color.multiply(object.material.emission_power);
-                    let emission = emitted_light.multiply_elementwise(&ray_color);
-                    incoming_light = incoming_light.add(&emission);
+                    let emitted_light = object.material.emission_color * object.material.emission_power;
+                    let emission = emitted_light * ray_color;
+                    incoming_light = incoming_light + emission;
 
-                    ray_color = ray_color.multiply_elementwise(&object.material.color);
+                    ray_color = ray_color * object.material.color;
 
                     if object.material.emission_power > 0.0 {
                         return incoming_light;
@@ -705,19 +727,19 @@ impl Renderer {
                     ray.direction = random.random_hemisphere_direction(&normal);
 
                     // Calculate the incoming light
-                    let emitted_light = object.material.emission_color.multiply(object.material.emission_power);
-                    let emission = emitted_light.multiply_elementwise(&ray_color);
-                    incoming_light = incoming_light.add(&emission);
+                    let emitted_light = object.material.emission_color * object.material.emission_power;
+                    let emission = emitted_light * ray_color;
+                    incoming_light = incoming_light + emission;
 
-                    ray_color = ray_color.multiply_elementwise(&object.material.color);
+                    ray_color = ray_color * object.material.color;
 
                     if object.material.emission_power > 0.0 {
                         return incoming_light;
                     }
                 },
-                IntersectionObject::None => {      
+                IntersectionObject::None => {
                     let background_color = ray.get_background_color();
-                    return ray_color.multiply_elementwise(&background_color);
+                    return ray_color * background_color;
                 },
             };
         }
