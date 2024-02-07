@@ -1,7 +1,7 @@
 extern crate console_error_panic_hook;
 
 use core::panic;
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div};
 
 use wasm_bindgen::prelude::*;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
@@ -92,12 +92,34 @@ impl Add for Vector {
     }
 }
 
+// Method to add another vector and assign it
+impl AddAssign for Vector {
+    fn add_assign(&mut self, v: Self) {
+        *self = Self {
+            x: self.x + v.x,
+            y: self.y + v.y,
+            z: self.z + v.z,
+        }
+    }
+}
+
 // Method to subtract another vector
 impl Sub for Vector {
     type Output = Self;
 
     fn sub(self, v: Self) -> Self {
         Self {
+            x: self.x - v.x,
+            y: self.y - v.y,
+            z: self.z - v.z,
+        }
+    }
+}
+
+// Method to subtract another vector and assign it
+impl SubAssign for Vector {
+    fn sub_assign(&mut self, v: Self) {
+        *self = Self {
             x: self.x - v.x,
             y: self.y - v.y,
             z: self.z - v.z,
@@ -124,6 +146,17 @@ impl Mul for Vector {
 
     fn mul(self, v: Self) -> Self {
         Self {
+            x: self.x * v.x,
+            y: self.y * v.y,
+            z: self.z * v.z,
+        }
+    }
+}
+
+// Method to multiply another vector and assign it
+impl MulAssign for Vector {
+    fn mul_assign(&mut self, v: Self) {
+        *self = Self {
             x: self.x * v.x,
             y: self.y * v.y,
             z: self.z * v.z,
@@ -175,7 +208,7 @@ impl Random {
             let y = self.random_value() * 2.0 - 1.0;
             let z = self.random_value() * 2.0 - 1.0;
 
-            let point_in_cube = Vector {x, y, z};
+            let point_in_cube = Vector { x, y, z };
             let sqr_dst_from_center = point_in_cube.dot(&point_in_cube);
 
             // If point is inside sphere, scale it to lie on the surface (otherwise, keep trying)
@@ -213,7 +246,7 @@ pub enum IntersectionType {
 pub enum IntersectionObject {
     Sphere(Option<Intersection<Sphere>>),
     Cube(Option<Intersection<Cube>>),
-    None
+    None,
 }
 
 // Rust Intersections struct for holding the closest intersection of each type
@@ -611,7 +644,11 @@ impl Renderer {
             ));
         }
 
-        let cumulative_image_data = ImageData::new_with_u8_clamped_array_and_sh(wasm_bindgen::Clamped(cumulative_data.as_slice()), self.canvas.width(), self.canvas.height())?;
+        let cumulative_image_data = ImageData::new_with_u8_clamped_array_and_sh(
+            wasm_bindgen::Clamped(cumulative_data.as_slice()),
+            self.canvas.width(),
+            self.canvas.height()
+        )?;
 
         // Put the modified ImageData back to the canvas
         context.put_image_data(&cumulative_image_data, 0.0, 0.0)?;
@@ -707,9 +744,9 @@ impl Renderer {
                     // Calculate the incoming light
                     let emitted_light = object.material.emission_color * object.material.emission_power;
                     let emission = emitted_light * ray_color;
-                    incoming_light = incoming_light + emission;
+                    incoming_light += emission;
 
-                    ray_color = ray_color * object.material.color;
+                    ray_color *= object.material.color;
 
                     if object.material.emission_power > 0.0 {
                         return incoming_light;
@@ -729,9 +766,9 @@ impl Renderer {
                     // Calculate the incoming light
                     let emitted_light = object.material.emission_color * object.material.emission_power;
                     let emission = emitted_light * ray_color;
-                    incoming_light = incoming_light + emission;
+                    incoming_light += emission;
 
-                    ray_color = ray_color * object.material.color;
+                    ray_color *= object.material.color;
 
                     if object.material.emission_power > 0.0 {
                         return incoming_light;

@@ -3,17 +3,12 @@ import init, * as wasm from "./pkg/raytracer.js"
 
 await init();
 
-// Get the canvas element and the 2d context
+// Get the canvas element
 const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
 
 // Set the width and height of the canvas
 canvas.width = 600;  // Replace 800 with your desired width
 canvas.height = 600; // Replace 600 with your desired height
-
-// Create ImageData object for direct pixel manipulation
-const imageData = ctx.createImageData(canvas.width, canvas.height);
-const data = imageData.data;
 
 async function run() {
     // Define the settigns of the renderer
