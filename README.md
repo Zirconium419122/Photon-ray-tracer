@@ -37,13 +37,13 @@ If you have ideas for additional features or improvements, feel free to open an 
 
 If you have specific features you'd like to see added to Photon, please open an issue and tag it as a feature request. We'll consider it for future development.
 
-### Prerequisites
+## Prerequisites
 
 - Web browser with support for HTML5 JavaScript and WASM
 - Cargo and wasm-pack for the compilation of the Rust code
 - Node.js to host the web server
 
-### Installation
+## Installation
 
 1. Clone the repository:
 
