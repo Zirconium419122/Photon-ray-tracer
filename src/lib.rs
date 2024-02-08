@@ -438,39 +438,39 @@ impl Cube {
     }
 
     fn intersect(&self, ray: &Ray) -> Option<Intersection<Cube>> {
-        let half_size = self.size * 0.5;
+        let half_size = self.size / 2.0;
 
         // Calculate the minimum and maximum extents along each axis
-        let min_x = self.center.x - half_size.x;
-        let min_y = self.center.y - half_size.y;
-        let min_z = self.center.z - half_size.z;
+        let min_bound = self.center - half_size;
+        let max_bound = self.center + half_size;
 
-        let max_x = self.center.x + half_size.x;
-        let max_y = self.center.y + half_size.y;
-        let max_z = self.center.z + half_size.z;
+        let inv_direction = Vector {
+            x: 1.0 / ray.direction.x,
+            y: 1.0 / ray.direction.y,
+            z: 1.0 / ray.direction.z,
+        };
 
         // Calculate the intersection distances along each axis
-        let t_min_x = (min_x - ray.origin.x) / ray.direction.x;
-        let t_max_x = (max_x - ray.origin.x) / ray.direction.x;
+        let t1 = (min_bound.x - ray.origin.x) * inv_direction.x;
+        let t2 = (max_bound.x - ray.origin.x) * inv_direction.x;
 
-        let t_min_y = (min_y - ray.origin.y) / ray.direction.y;
-        let t_max_y = (max_y - ray.origin.y) / ray.direction.y;
+        let t_min = t1.min(t2);
+        let t_max = t1.max(t2);
 
-        let t_min_z = (min_z - ray.origin.z) / ray.direction.z;
-        let t_max_z = (max_z - ray.origin.z) / ray.direction.z;
+        let t3 = (min_bound.y - ray.origin.y) * inv_direction.y;
+        let t4 = (max_bound.y - ray.origin.y) * inv_direction.y;
 
-        // Find the intersection intervals along each axis
-        let t_min = t_min_x
-            .max(t_max_x)
-            .max(t_min_y.min(t_max_y))
-            .max(t_min_z.min(t_max_z));
-        let t_max = t_min_x
-            .min(t_max_x)
-            .min(t_min_y.min(t_max_y))
-            .min(t_min_z.min(t_max_z));
+        let t_min = t3.min(t4).max(t_min);
+        let t_max = t3.max(t4).min(t_max);
+
+        let t5 = (min_bound.z - ray.origin.z) * inv_direction.z;
+        let t6 = (max_bound.z - ray.origin.z) * inv_direction.z;
+
+        let t_min = t5.min(t6).max(t_min);
+        let t_max = t5.max(t6).min(t_max);
 
         // Check if there is a valid intersection
-        if t_min <= t_max && t_max > 0.0 {
+        if t_min + 1e-6 <= t_max && t_min >= 0.0 {
             // Return the intersection point at the minmum distance
             let intersection_point = ray.point_at_parameter(t_min);
             Some(Intersection {
@@ -493,25 +493,25 @@ impl Cube {
         // Identify the face closest to the point and assign the normal accordingly
         if dx.abs() > dy.abs() && dx.abs() > dz.abs() {
             // Point is on the face with the largest x-coordinate differance
-            return Vector {
+            Vector {
                 x: dx.signum(),
                 y: 0.0,
                 z: 0.0,
-            };
+            }
         } else if dy.abs() > dz.abs() {
             // Point is on the face with the largest y-coordinate differance
-            return Vector {
+            Vector {
                 x: 0.0,
                 y: dy.signum(),
                 z: 0.0,
-            };
+            }
         } else {
             // Point is on the face with the largest z-coordinate differance
-            return Vector {
+            Vector {
                 x: 0.0,
                 y: 0.0,
                 z: dz.signum(),
-            };
+            }
         }
     }
 }
