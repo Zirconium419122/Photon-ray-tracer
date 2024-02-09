@@ -68,8 +68,8 @@ Adding a object to the scene is quite simple. All you have to do is create a new
 {
    const sphereCenter = new wasm.Vector(0, 0, -5);
    const sphereRadius = 1;
-   const sphereMaterial = new wasm.Material(new wasm.Color(1, 0, 0));
-   const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
+   const sphereMaterial = new Material(new wasm.Vector(1, 0, 0));
+   const sphere = new Sphere(sphereCenter, sphereRadius, sphereMaterial);
 
    scene.addObject(sphere);
    console.log(sphere);
