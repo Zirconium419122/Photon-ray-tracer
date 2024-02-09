@@ -58,3 +58,21 @@ If you have specific features you'd like to see added to Photon, please open an 
 4. Run the following command to start the development server
    ```bash
    npm run dev
+
+## Usage
+
+### How to add a object to the scene
+
+Adding a object to the scene is quite simple. All you have to do is create a new object and add it to the scene. This can be done by using the `addObject` function. Let's do it with a sphere. We add it inside a scope thatway we don't have to rename the object and the parts of it each time.
+```javascript
+{
+   const sphereCenter = new wasm.Vector(0, 0, -5);
+   const sphereRadius = 1;
+   const sphereMaterial = new wasm.Material(new wasm.Color(1, 0, 0));
+   const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
+
+   scene.addObject(sphere);
+   console.log(sphere);
+}
+```
+Firstly we create a `Vector` object to represent the center of the sphere and a number to represent the radius of the sphere in this case 1. We then create a `Material` object to represent the color of the sphere and if it emmits light or not. Finally we add the sphere to the scene and log it to the console.
