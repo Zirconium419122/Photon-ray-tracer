@@ -268,7 +268,7 @@ impl Intersections {
     pub fn determine_closer(&mut self) {
         self.closer_type = match (&self.sphere_intersection, &self.cube_intersection) {
             (Some(sphere_intersection), Some(cube_intersection)) => {
-                if sphere_intersection.t < cube_intersection.t {
+                if sphere_intersection.t <= cube_intersection.t {
                     Some(IntersectionType::Sphere)
                 } else {
                     Some(IntersectionType::Cube)
@@ -644,10 +644,9 @@ impl Renderer {
             ));
         }
 
-        let cumulative_image_data = ImageData::new_with_u8_clamped_array_and_sh(
+        let cumulative_image_data = ImageData::new_with_u8_clamped_array(
             wasm_bindgen::Clamped(cumulative_data.as_slice()),
             self.canvas.width(),
-            self.canvas.height()
         )?;
 
         // Put the modified ImageData back to the canvas
@@ -666,8 +665,8 @@ impl Renderer {
             let jitter_y: f64 = (random::<f64>() - 0.5) / 2.0;
 
             // Calculate pixel coordinates for the jittered sample
-            let sample_x: f64 = x + (sample as f64 + jitter_x) / 10 as f64;
-            let sample_y: f64 = y + (sample as f64 + jitter_y) / 10 as f64;
+            let sample_x: f64 = x + (sample as f64 + jitter_x) / self.settings.num_samples as f64;
+            let sample_y: f64 = y + (sample as f64 + jitter_y) / self.settings.num_samples as f64;
 
             // Create a ray from the camera to the current pixel
             let aspect_ratio = self.canvas.width() as f64 / self.canvas.height() as f64;
@@ -700,12 +699,11 @@ impl Renderer {
 
         let mut random = Random::new(state);
 
-        let mut closest_intersection_sphere: Option<Intersection<Sphere>> = None;
-        let mut closest_intersection_cube: Option<Intersection<Cube>> = None;
-
         // Recursively reflect the ray
         for _ in 0..self.settings.max_reflection_depth {
             // Test for intersection with objects in the scene
+            let mut closest_intersection_sphere: Option<Intersection<Sphere>> = None;
+            
             for sphere in &self.scene.spheres {
                 if let Some(intersection_result) = sphere.intersect(&ray) {
                     if closest_intersection_sphere.is_none()
@@ -715,6 +713,8 @@ impl Renderer {
                     }
                 }
             }
+
+            let mut closest_intersection_cube: Option<Intersection<Cube>> = None;
 
             for cube in &self.scene.cubes {
                 if let Some(intersection_result) = cube.intersect(&ray) {
