@@ -76,3 +76,17 @@ Adding a object to the scene is quite simple. All you have to do is create a new
 }
 ```
 Firstly we create a `Vector` object to represent the center of the sphere and a number to represent the radius of the sphere in this case 1. We then create a `Material` object to represent the color of the sphere and if it emmits light or not. Finally we add the sphere to the scene and log it to the console.
+
+Adding a cube is basicly the same as adding a sphere. But instead of a `Sphere` object we use a `Cube` object. And we add it to the scene by using the `addObject` function after having defined the cube. This we could do like so.
+```javascript
+{
+   const cubeCenter = new wasm.Vector(0, 0, -5);
+   const cubeSize = new wasm.Vector(1, 1, 1);
+   const cubeMaterial = new Material(new wasm.Vector(0, 0, 1));
+   const cube = new Cube(cubeCenter, cubeSize, cubeMaterial);
+
+   scene.addObject(cube);
+   console.log(cube);
+}
+```
+Here we first define the center of the cube and then we define the size of it with a `Vector` of values X, Y and Z. We then create a `Material` object to represent the color of the cube and if it emmits light or not. Finally we add the cube to the scene using the `addObject` function and log it to the console. The cube we've created has a size of 1 in all directions making this a cube and not a box and it's centered at 0, 0, -5 so five units infront of the Camera and lastly we difine that it should have a dark blue color.
