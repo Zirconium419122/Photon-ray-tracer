@@ -264,6 +264,7 @@ impl Intersections {
         
         Intersections { sphere_intersection, cube_intersection, closer_type: None }
     }
+
     // Method / Function to determine the which intersection is closer
     pub fn determine_closer(&mut self) {
         self.closer_type = match (&self.sphere_intersection, &self.cube_intersection) {
@@ -396,8 +397,8 @@ impl Sphere {
             if t > 0.0 {
                 let intersection_point = ray.point_at_parameter(t);
                 Some(Intersection {
-                    t,
-                    intersection_point,
+                    t: t,
+                    intersection_point: intersection_point,
                     intersection_object: *self,
                 })
             } else {
@@ -629,8 +630,12 @@ impl Renderer {
                     i += 4;
                 }
 
+                let bar_length: f32 = 50.0;
+                let fraction: f32 = y as f32 / self.canvas.height() as f32;
+                let filled_length: usize = (bar_length * fraction) as usize;
+                let bar: String = format!("[{}{}] {:.2}%", "#".repeat(filled_length), "-".repeat(bar_length as usize - filled_length), fraction * 100.0);
                 console_log(
-                    &format!("Row number {} is complete", y)
+                    &bar
                 );
             }
 
@@ -682,7 +687,7 @@ impl Renderer {
             let color = self.trace_ray(&mut ray, sample_x, sample_y, state);
 
             // Accumulate the color
-            accumulated_color = accumulated_color + color;
+            accumulated_color += color;
         }
 
         accumulated_color / self.settings.num_samples.into()
