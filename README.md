@@ -90,3 +90,13 @@ Adding a cube is basicly the same as adding a sphere. But instead of a `Sphere` 
 }
 ```
 Here we first define the center of the cube and then we define the size of it with a `Vector` of values X, Y and Z. We then create a `Material` object to represent the color of the cube and if it emmits light or not. Finally we add the cube to the scene using the `addObject` function and log it to the console. The cube we've created has a size of 1 in all directions making this a cube and not a box and it's centered at 0, 0, -5 so five units infront of the Camera and lastly we difine that it should have a dark blue color.
+
+To change the number of samples per pixel, the reflection depth or the number of frames you would change the variables defined in the main.js file.
+```javascript
+const maxReflectionDepth = 10;
+const numSamples = 5;
+const numFrames = 1;
+```
+This sets the settings to have a reflection depth of 10 and to project 5 rays and to only render 1 frame.
+
+Though defining these as global variables might not be the optimal solution I should probably define a class/struct.
