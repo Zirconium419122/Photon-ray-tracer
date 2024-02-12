@@ -7,8 +7,8 @@ await init();
 const canvas = document.getElementById('canvas');
 
 // Set the width and height of the canvas
-canvas.width = 1920;  // Replace 800 with your desired width
-canvas.height = 1080; // Replace 600 with your desired height
+canvas.width = 800;  // Replace 800 with your desired width
+canvas.height = 600; // Replace 600 with your desired height
 
 async function run() {
     // Define the settigns of the renderer
@@ -48,7 +48,7 @@ async function run() {
     }
 
     {
-      const sphereCenter = new wasm.Vector(3, 1, -11);
+      const sphereCenter = new wasm.Vector(3, 1, -10);
       const sphereRadius = 1;
       const sphereMaterial = new wasm.Material(new wasm.Vector(0, 1, 0), 1, new wasm.Vector(0, 0, 0), 0);
       const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);

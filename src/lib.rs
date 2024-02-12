@@ -269,7 +269,7 @@ impl Intersections {
     pub fn determine_closer(&mut self) {
         self.closer_type = match (&self.sphere_intersection, &self.cube_intersection) {
             (Some(sphere_intersection), Some(cube_intersection)) => {
-                if sphere_intersection.t <= cube_intersection.t {
+                if sphere_intersection.t > cube_intersection.t {
                     Some(IntersectionType::Sphere)
                 } else {
                     Some(IntersectionType::Cube)
@@ -641,7 +641,7 @@ impl Renderer {
 
             // Update the cumulativeImageData with averaging the pixel
             for i in 0..data.len() {
-                cumulative_data[i] = cumulative_data[i] + (data[i] / self.settings.num_frames as u8);
+                cumulative_data[i] += data[i] / self.settings.num_frames as u8;
             }
 
             console_log(&format!(
@@ -739,7 +739,7 @@ impl Renderer {
                     let intersection_point = intersection_sphere.unwrap().intersection_point;
                     let object = &intersection_sphere.unwrap().intersection_object;
 
-                    // Get the normal on the object
+                    // Get the normal on the Sphere
                     let normal = object.calculate_normal(&intersection_point);
 
                     // Update the origin and direction of the ray for the next iteration
@@ -761,7 +761,7 @@ impl Renderer {
                     let intersection_point = intersection_cube.unwrap().intersection_point;
                     let object = &intersection_cube.unwrap().intersection_object;
 
-                    // Get the normal on the object
+                    // Get the normal on the Cube
                     let normal = object.calculate_normal(&intersection_point);
 
                     // Update the origin and direction of the ray for the next iteration
