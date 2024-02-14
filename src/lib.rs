@@ -204,10 +204,12 @@ impl Random {
 
     pub fn random_direction(&mut self) -> Vector {
         for _ in 0..100 {
+            // Generate a random point in a cube
             let x = self.random_value() * 2.0 - 1.0;
             let y = self.random_value() * 2.0 - 1.0;
             let z = self.random_value() * 2.0 - 1.0;
 
+            // Calculate the distance from the center of the cube
             let point_in_cube = Vector { x, y, z };
             let sqr_dst_from_center = point_in_cube.dot(&point_in_cube);
 
@@ -269,7 +271,7 @@ impl Intersections {
     pub fn determine_closer(&mut self) {
         self.closer_type = match (&self.sphere_intersection, &self.cube_intersection) {
             (Some(sphere_intersection), Some(cube_intersection)) => {
-                if sphere_intersection.t > cube_intersection.t {
+                if sphere_intersection.t < cube_intersection.t {
                     Some(IntersectionType::Sphere)
                 } else {
                     Some(IntersectionType::Cube)
@@ -471,7 +473,7 @@ impl Cube {
         let t_max = t5.max(t6).min(t_max);
 
         // Check if there is a valid intersection
-        if t_min + 1e-6 <= t_max && t_min >= 0.0 {
+        if t_min <= t_max && t_min >= 0.0 {
             // Return the intersection point at the minmum distance
             let intersection_point = ray.point_at_parameter(t_min);
             Some(Intersection {
@@ -736,46 +738,46 @@ impl Renderer {
 
             match closest_intersections.get_closer_intersection() {
                 IntersectionObject::Sphere(intersection_sphere) => {
-                    let intersection_point = intersection_sphere.unwrap().intersection_point;
-                    let object = &intersection_sphere.unwrap().intersection_object;
+                    let sphere_intersection_point = intersection_sphere.unwrap().intersection_point;
+                    let sphere = intersection_sphere.unwrap().intersection_object;
 
                     // Get the normal on the Sphere
-                    let normal = object.calculate_normal(&intersection_point);
+                    let normal = sphere.calculate_normal(&sphere_intersection_point);
 
                     // Update the origin and direction of the ray for the next iteration
-                    ray.origin = intersection_point;
+                    ray.origin = sphere_intersection_point;
                     ray.direction = random.random_hemisphere_direction(&normal);
 
                     // Calculate the incoming light
-                    let emitted_light = object.material.emission_color * object.material.emission_power;
+                    let emitted_light = sphere.material.emission_color * sphere.material.emission_power;
                     let emission = emitted_light * ray_color;
                     incoming_light += emission;
 
-                    ray_color *= object.material.color;
+                    ray_color *= sphere.material.color;
 
-                    if object.material.emission_power > 0.0 {
+                    if sphere.material.emission_power > 0.0 {
                         return incoming_light;
                     }
                 },
                 IntersectionObject::Cube(intersection_cube) => {
-                    let intersection_point = intersection_cube.unwrap().intersection_point;
-                    let object = &intersection_cube.unwrap().intersection_object;
+                    let cube_intersection_point = intersection_cube.unwrap().intersection_point;
+                    let cube = intersection_cube.unwrap().intersection_object;
 
                     // Get the normal on the Cube
-                    let normal = object.calculate_normal(&intersection_point);
+                    let normal = cube.calculate_normal(&cube_intersection_point);
 
                     // Update the origin and direction of the ray for the next iteration
-                    ray.origin = intersection_point;
+                    ray.origin = cube_intersection_point;
                     ray.direction = random.random_hemisphere_direction(&normal);
 
                     // Calculate the incoming light
-                    let emitted_light = object.material.emission_color * object.material.emission_power;
+                    let emitted_light = cube.material.emission_color * cube.material.emission_power;
                     let emission = emitted_light * ray_color;
                     incoming_light += emission;
 
-                    ray_color *= object.material.color;
+                    ray_color *= cube.material.color;
 
-                    if object.material.emission_power > 0.0 {
+                    if cube.material.emission_power > 0.0 {
                         return incoming_light;
                     }
                 },
