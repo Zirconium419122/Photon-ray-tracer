@@ -61,6 +61,18 @@ If you have specific features you'd like to see added to Photon, please open an 
 
 ## Usage
 
+### How to setup the boiler plate
+
+We need three things to render the scene the first is the `scene` which can be created like so.
+```javascript
+const scene = new Scene();
+```
+Now you can add the objects to the scene as per the instructions later in the README, the second thing we need is the `renderer` which can be made like so.
+```javascript
+const renderer = new Renderer(canvas, scene);
+```
+The last thing we need before we call the `render` function is the parameters for the rendering which we show how to do later in the README.
+
 ### How to add a Sphere to the scene
 
 Adding a object to the scene is quite simple. All you have to do is create a new object and add it to the scene. This can be done by using the `addObject` function. Let's do it with a sphere. We add it inside a scope thatway we don't have to rename the object and the parts of it each time.
