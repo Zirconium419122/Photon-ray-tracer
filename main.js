@@ -1,5 +1,5 @@
 import './style.css'
-import init, * as wasm from "./pkg/raytracer.js"
+import init, * as wasm from "./pkg/photon_ray_tracer.js"
 
 await init();
 

@@ -3,8 +3,8 @@ name = "photon-ray-tracer"
 version = "0.1.0"
 edition = "2021"
 
-description = "A raytracer writen in in Rust and JavaScript"
-repository = "https://github.com/Zirconium419122/Photon-ray-tracer"
+description = "A raytracer writen in Rust and JavaScript"
+repository = "https://github.com/Zirconium419122/Photon-ray-tracer/"
 licence = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
