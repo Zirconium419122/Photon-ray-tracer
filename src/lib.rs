@@ -399,7 +399,7 @@ impl Sphere {
             if t > 0.0 {
                 let intersection_point = ray.point_at_parameter(t);
                 Some(Intersection {
-                    t: t,
+                    t: t.sqrt(),
                     intersection_point: intersection_point,
                     intersection_object: *self,
                 })
