@@ -1,6 +1,7 @@
 extern crate console_error_panic_hook;
 
 use core::panic;
+use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div};
 
 use wasm_bindgen::prelude::*;
 
@@ -105,6 +106,110 @@ impl Vector {
             x: self.x / mag,
             y: self.y / mag,
             z: self.z / mag,
+        }
+    }
+}
+
+// Method to add another vector
+impl Add for Vector {
+    type Output = Self;
+
+    fn add(self, v: Self) -> Self {
+        Self {
+            x: self.x + v.x,
+            y: self.y + v.y,
+            z: self.z + v.z,
+        }
+    }
+}
+
+// Method to add another vector and assign it
+impl AddAssign for Vector {
+    fn add_assign(&mut self, v: Self) {
+        *self = Self {
+            x: self.x + v.x,
+            y: self.y + v.y,
+            z: self.z + v.z,
+        }
+    }
+}
+
+// Method to subtract another vector
+impl Sub for Vector {
+    type Output = Self;
+
+    fn sub(self, v: Self) -> Self {
+        Self {
+            x: self.x - v.x,
+            y: self.y - v.y,
+            z: self.z - v.z,
+        }
+    }
+}
+
+// Method to subtract another vector and assign it
+impl SubAssign for Vector {
+    fn sub_assign(&mut self, v: Self) {
+        *self = Self {
+            x: self.x - v.x,
+            y: self.y - v.y,
+            z: self.z - v.z,
+        }
+    }
+}
+
+// Method to multiply with a scalar
+impl Mul<f64> for Vector {
+    type Output = Self;
+
+    fn mul(self, scalar: f64) -> Self {
+        Self {
+            x: self.x * scalar,
+            y: self.y * scalar,
+            z: self.z * scalar,
+        }
+    }
+}
+
+// Method to multiply with a Vector
+impl Mul for Vector {
+    type Output = Self;
+
+    fn mul(self, v: Self) -> Self {
+        Self {
+            x: self.x * v.x,
+            y: self.y * v.y,
+            z: self.z * v.z,
+        }
+    }
+}
+
+// Method to multiply another vector and assign it
+impl MulAssign for Vector {
+    fn mul_assign(&mut self, v: Self) {
+        *self = Self {
+            x: self.x * v.x,
+            y: self.y * v.y,
+            z: self.z * v.z,
+        }
+    }
+}
+
+// Method to divide by a scalar
+impl Div<f64> for Vector {
+    type Output = Self;
+
+    fn div(self, scalar: f64) -> Self {
+        // Check for division by zero to avoid errors
+        if scalar != 0.0 {
+            Self {
+                x: self.x / scalar,
+                y: self.y / scalar,
+                z: self.z / scalar,
+            }
+        } else {
+            // Handle division by zero gracefully
+            panic!("Division by zero!");
         }
     }
 }
