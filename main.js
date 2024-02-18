@@ -278,6 +278,8 @@ class Renderer {
     VectorPool.set_values(10, 0, 0, 0);
     let accumulatedColor = VectorPool.get(10);
 
+    const aspectRatio = canvas.width / canvas.height;
+
     for (let sample = 0; sample < numSamples; sample++) {
       // Calculate jittered sample position within the pixel
       const jitterX = (Math.random() - 0.5) / 2;
@@ -290,7 +292,6 @@ class Renderer {
       // Create a ray from the camera to the current pixel
       VectorPool.set_values(11, 0, 0, 0);
       const rayOrigin = VectorPool.get(11);
-      const aspectRatio = canvas.width / canvas.height;
       VectorPool.set_values(12, 
         (sampleX / canvas.width) * 2 - 1,
         ((sampleY / canvas.height) * 2 - 1) / aspectRatio,
