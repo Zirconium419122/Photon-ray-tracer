@@ -9,10 +9,6 @@ const VectorPool = new wasm.VectorPool(100);
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// Create ImageData object for direct pixel manipulation
-const imageData = ctx.createImageData(canvas.width, canvas.height);
-const data = imageData.data;
-
 // Set the width and height of the canvas
 canvas.width = 800;  // Replace 800 with your desired width
 canvas.height = 600; // Replace 600 with your desired height
@@ -219,9 +215,6 @@ class Renderer {
 
   // Method to render the scene
   Render() {
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-
     // Create new ImageData object for direct pixel manipulation
     const imageData = ctx.createImageData(canvas.width, canvas.height);
 
@@ -322,10 +315,9 @@ class Renderer {
     const pixelIndex = y * numPixels + x;
     state += pixelIndex * 485732;
 
+    // Initialize incomingLigth and rayColor variables
     VectorPool.set_values(20, 0, 0, 0);
-    let incomingLight = VectorPool.get(20);
     VectorPool.set_values(21, 1, 1, 1);
-    let rayColor = VectorPool.get(21);
 
     let closestIntersection = null;
 
