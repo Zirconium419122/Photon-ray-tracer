@@ -350,8 +350,8 @@ impl Ray {
     pub fn get_background_color(&self) -> Vector {
         let t = 0.5 * (self.direction.y + 1.0);
     
-        let white = Vector::new(1.0, 1.0, 1.0);
-        let blue = Vector::new(0.5, 0.7, 1.0);
+        let white = Vector { x: 1.0, y: 1.0, z: 1.0 };
+        let blue = Vector { x: 0.5, y: 0.7, z: 1.0 };
     
         let gradient = white * (1.0 - t) + (blue * t);
     
@@ -664,7 +664,7 @@ impl Renderer {
 
     pub fn per_pixel(&self, x: f64, y: f64, state: u32) -> Vector {
         // Initialize the accumlateColor Vector
-        let mut accumulated_color = Vector::new(0.0, 0.0, 0.0);
+        let mut accumulated_color = Vector { x: 0.0, y: 0.0, z: 0.0 };
 
         for sample in 0..self.settings.num_samples {
             // Calculate the jittered sample position within the pixel
@@ -677,12 +677,12 @@ impl Renderer {
 
             // Create a ray from the camera to the current pixel
             let aspect_ratio = self.canvas.width() as f64 / self.canvas.height() as f64;
-            let ray_origin = Vector::new(0.0, 0.0, 0.0);
-            let ray_direction = Vector::new(
-                (sample_x / self.canvas.width() as f64) * 2.0 - 1.0,
-                ((sample_y / self.canvas.height() as f64) * 2.0 - 1.0) / aspect_ratio,
-                -1.0,
-            );
+            let ray_origin = Vector { x: 0.0, y: 0.0, z: 0.0 };
+            let ray_direction = Vector {
+                x: (sample_x / self.canvas.width() as f64) * 2.0 - 1.0,
+                y: ((sample_y / self.canvas.height() as f64) * 2.0 - 1.0) / aspect_ratio,
+                z: -1.0,
+            };
             let mut ray = Ray::new(ray_origin, ray_direction);
 
             // Trace the ray to get the color
@@ -701,8 +701,8 @@ impl Renderer {
         let pixel_index = (y * self.canvas.width() as f64 + x) as u32;
         let state = state + num_pixels + pixel_index * 485732;
 
-        let mut incoming_light = Vector::new(0.0, 0.0, 0.0);
-        let mut ray_color = Vector::new(1.0, 1.0, 1.0);
+        let mut incoming_light = Vector { x: 0.0, y: 0.0, z: 0.0 };
+        let mut ray_color = Vector { x: 1.0, y: 1.0, z: 1.0 };
 
         let mut random = Random::new(state);
 
