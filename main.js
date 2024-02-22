@@ -326,19 +326,7 @@ class Renderer {
       // Change the state every reflection
       state += 243723;
 
-      // Test for intersections with objects in the scene
-      for (const object of this.scene.objects) {
-        const intersectionResult = object.intersect(ray);
-
-        if (intersectionResult) {
-          if (
-            !closestIntersection ||
-            intersectionResult.t < closestIntersection.t
-          ) {
-            closestIntersection = intersectionResult;
-          }
-        }
-      }
+      let closestIntersection = this.GetClosestIntersection(ray);
 
       let incomingLight = VectorPool.get(20);
       let rayColor = VectorPool.get(21);
@@ -381,6 +369,26 @@ class Renderer {
     }
 
     return incomingLight;
+  }
+
+  GetClosestIntersection(ray) {
+    let closestIntersection = null;
+
+    // Test for intersections with objects in the scene
+    for (const object of this.scene.objects) {
+      const intersectionResult = object.intersect(ray);
+
+      if (intersectionResult) {
+        if (
+          !closestIntersection ||
+          intersectionResult.t < closestIntersection.t
+        ) {
+          closestIntersection = intersectionResult;
+        }
+      }
+    }
+
+    return closestIntersection;
   }
 }
 
