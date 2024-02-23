@@ -10,8 +10,8 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 // Set the width and height of the canvas
-canvas.width = 800;  // Replace 800 with your desired width
-canvas.height = 600; // Replace 600 with your desired height
+canvas.width = 400;  // Replace 800 with your desired width
+canvas.height = 300; // Replace 600 with your desired height
 
 // Utility class for vector and ray operations
 class Utils {
@@ -111,11 +111,7 @@ class Sphere {
 
     if (discriminant >= 0) {
       // Ray intersects the sphere, calculate intersection point
-      const t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
-      const t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
-
-      // Return the smaller positive intersection point
-      const t = Math.min(t1, t2);
+      const t = (-b - Math.sqrt(discriminant)) / (2 * a);
 
       if (t > 0) {
         const intersectionPoint = ray.pointAtParameter(t);
@@ -317,9 +313,8 @@ class Renderer {
 
     // Initialize incomingLigth and rayColor variables
     VectorPool.set_values(20, 0, 0, 0);
+    let incomingLight = VectorPool.get(20);
     VectorPool.set_values(21, 1, 1, 1);
-
-    let closestIntersection = null;
 
     // Recursivly reflect the ray
     for (let i = 0; i < maxReflectionDepth; i++) {
