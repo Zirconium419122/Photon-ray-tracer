@@ -398,19 +398,16 @@ impl Sphere {
 
             if t > 0.0 {
                 let intersection_point = ray.point_at_parameter(t);
-                Some(Intersection {
+                return Some(Intersection {
                     t: t.sqrt(),
                     intersection_point: intersection_point,
                     intersection_object: *self,
-                })
-            } else {
-                // Ray does not intersect the sphere
-                None
+                });
             }
-        } else {
-            // Ray does not intersect the sphere
-            None
         }
+
+        // Ray does not intersect the sphere
+        None
     }
 
     fn calculate_normal(&self, point: &Vector) -> Vector {
@@ -476,15 +473,15 @@ impl Cube {
         if t_min <= t_max && t_min >= 0.0 {
             // Return the intersection point at the minmum distance
             let intersection_point = ray.point_at_parameter(t_min);
-            Some(Intersection {
+            return Some(Intersection {
                 t: t_min,
                 intersection_point,
                 intersection_object: *self,
-            })
-        } else {
-            // Ray does not intersect with the cube
-            None
+            });
         }
+
+        // Ray does not intersect with the cube
+        None
     }
 
     fn calculate_normal(&self, point: &Vector) -> Vector {
