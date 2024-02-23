@@ -44,7 +44,7 @@ async function run() {
       const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
   
       scene.add_sphere(sphere);
-      console.log(sphere);      
+      console.log(sphere);
     }
 
     {
@@ -54,7 +54,7 @@ async function run() {
       const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
   
       scene.add_sphere(sphere);
-      console.log(sphere);      
+      console.log(sphere);
     }
 
     {
@@ -64,7 +64,7 @@ async function run() {
       const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
   
       scene.add_sphere(sphere);
-      console.log(sphere);      
+      console.log(sphere);
     }
 
     {

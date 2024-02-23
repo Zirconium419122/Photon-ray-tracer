@@ -390,11 +390,7 @@ impl Sphere {
 
         if discriminant >= 0.0 {
             // Ray intersects the sphere, calculate intersection point
-            let t1 = -b - discriminant.sqrt() / (2.0 * a);
-            let t2 = -b + discriminant.sqrt() / (2.0 * a);
-
-            // Return the smaller positive intersection point
-            let t = t1.min(t2);
+            let t = -b - discriminant.sqrt() / (2.0 * a);
 
             if t > 0.0 {
                 let intersection_point = ray.point_at_parameter(t);
