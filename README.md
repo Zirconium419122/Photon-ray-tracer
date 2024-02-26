@@ -1,6 +1,6 @@
 # Photon Ray Tracer
 
-Photon is a simple ray tracer implemented in JavaScript and Rust. It is designed to render realistic images by simulating the behavior of light rays as they interact with objects in a 3D scene.
+Photon is a simple ray tracer implemented in JavaScript and Rust. It is designed to render realistic images by simulating the behaviour of light rays as they interact with objects in a 3D scene.
 
 ## Features
 
@@ -27,7 +27,7 @@ Photon is a simple ray tracer implemented in JavaScript and Rust. It is designed
 
 8. **Scene Editor:** Implement a scene editor where you can add and adjust the size and material of the objects in the scene.
 
-9. **Ui:** A simple Ui for adjusting rendering settings, like number of samples, number of frames, and the number of reflections
+9. **Ui:** A simple Ui for adjusting rendering settings, like the number of samples, number of frames, and the number of reflections
 
 ### How to Contribute
 
@@ -61,7 +61,7 @@ If you have specific features you'd like to see added to Photon, please open an 
 
 ## Usage
 
-### How to setup the boiler plate
+### How to set up the boilerplate
 
 We need three things to render the scene the first is the `scene` which can be created like so.
 ```javascript
@@ -75,7 +75,7 @@ The last thing we need before we call the `render` function is the parameters fo
 
 ### How to add a Sphere to the scene
 
-Adding a object to the scene is quite simple. All you have to do is create a new object and add it to the scene. This can be done by using the `addObject` function. Let's do it with a sphere. We add it inside a scope thatway we don't have to rename the object and the parts of it each time.
+Adding an object to the scene is quite simple. All you have to do is create a new object and add it to the scene. This can be done by using the `addObject` function. Let's do it with a sphere. We add it inside a scope that way we don't have to rename the object and the parts of it each time.
 ```javascript
 {
    const sphereCenter = new wasm.Vector(0, 0, -5);
@@ -87,12 +87,12 @@ Adding a object to the scene is quite simple. All you have to do is create a new
    console.log(sphere);
 }
 ```
-Firstly we create a `Vector` object to represent the center of the sphere and a number to represent the radius of the sphere in this case 1. We then create a `Material` object to represent the color of the sphere and if it emmits light or not. Finally we add the sphere to the scene and log it to the console.
+Firstly we create a `Vector` object to represent the center of the sphere and a number to represent the radius of the sphere in this case 1. We then create a `Material` object to represent the colour of the sphere and whether it emits light or not. Finally, we add the sphere to the scene and log it to the console.
 
 
 ### How to add a Cube to the scene
 
-Adding a cube is basicly the same as adding a sphere. But instead of a `Sphere` object we use a `Cube` object and instead of a radius we define a size which is a `Vector` where X, Y and Z determine the size of the cube/box. And we add it to the scene by using the `addObject` function after having defined the cube. This we could do like so.
+Adding a cube is basically the same as adding a sphere. But instead of a `Sphere` object we use a `Cube` object and instead of a radius we define a size which is a `Vector` where X, Y and Z determine the size of the cube/box. And we add it to the scene by using the `addObject` function after having defined the cube. This we could do like so.
 ```javascript
 {
    const cubeCenter = new wasm.Vector(0, 0, -5);
@@ -104,7 +104,7 @@ Adding a cube is basicly the same as adding a sphere. But instead of a `Sphere` 
    console.log(cube);
 }
 ```
-Here we first define the center of the cube and then we define the size of it with a `Vector` of values X, Y and Z. We then create a `Material` object to represent the color of the cube and if it emmits light or not. Finally we add the cube to the scene using the `addObject` function and log it to the console. The cube we've created has a size of 1 in all directions making this a cube and not a box and it's centered at 0, 0, -5 so five units infront of the Camera and lastly we difine that it should have a dark blue color.
+Here we first define the centre of the cube and then we define its size with a `Vector` of values X, Y and Z. We then create a `Material` object to represent the colour of the cube and if it emits light or not. Finally, we add the cube to the scene using the `addObject` function and log it to the console. The cube we've created has a size of 1 in all directions making this a cube and not a box and it's centred at 0, 0, -5 so five units in front of the Camera lastly we define that it should have a dark blue color.
 
 ### How to change the parameters of the renderer
 
