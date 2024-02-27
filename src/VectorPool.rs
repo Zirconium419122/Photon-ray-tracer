@@ -27,12 +27,13 @@ impl VectorPool {
             // Initialize the pool with default Vector instances
             pool.push(Vector { x: 0.0, y: 0.0, z: 0.0 });
         }
+
         Self { pool }
     }
 
     // Get a Vector from the pool by index, or allocate a new one if the pool is empty
     pub fn get(&self, index: usize) -> Vector {
-        if !self.pool.is_empty() && index < self.pool.len() {
+        if self.is_valid_index(index) {
             self.pool[index]
         } else {
             // Optionally you could handle an out-of-bounds index
@@ -43,7 +44,7 @@ impl VectorPool {
 
     // Set a specific index to a Vector to update the values of a specific Vector in the pool
     pub fn set(&mut self, index: usize, values: Vector) {
-        if !self.pool.is_empty() && index < self.pool.len() {
+        if self.is_valid_index(index) {
             self.pool[index] = values;
         } else {
             // Optionally you could handle an out-of-bounds index
@@ -53,13 +54,15 @@ impl VectorPool {
 
     // Set a specific index to some new values to update the values of a specific Vector in the pool
     pub fn set_values(&mut self, index: usize, x: f64, y: f64, z: f64) {
-        if !self.pool.is_empty() && index < self.pool.len() {
-            self.pool[index].x = x;
-            self.pool[index].y = y;
-            self.pool[index].z = z;
+        if self.is_valid_index(index) {
+            self.pool[index] = Vector { x, y, z };
         } else {
             // Optionally you could handle an out-of-bounds index
             panic!("Index out of bounds: {}", index);
         }
+    }
+
+    pub fn is_valid_index(&self, index: usize) -> bool {
+        !self.pool.is_empty() && index < self.pool.len()
     }
 }
