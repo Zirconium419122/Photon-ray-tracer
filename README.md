@@ -67,15 +67,15 @@ We need three things to render the scene the first is the `scene` which can be c
 ```javascript
 const scene = new Scene();
 ```
-Now you can add the objects to the scene as per the instructions later in the README, the second thing we need is the `renderer` which can be made like so.
+Now you can add the objects to the scene as per the instructions in this section on how to add [Cubes](#how-to-add-a-cube-to-the-scene) to the scene and here how to add [Spheres](#how-to-add-a-sphere-to-the-scene) to the scene, the second thing we need is the `renderer` which can be made like so.
 ```javascript
 const renderer = new Renderer(canvas, scene);
 ```
-The last thing we need before we call the `render` function is the parameters for the rendering which we show how to do later in the README.
+The last thing we need before we call the `render` function is to define the parameters for the renderer functions which we show how to do [here](#how-to-change-the-parameters-of-the-renderer).
 
 ### How to add a Sphere to the scene
 
-Adding an object to the scene is quite simple. All you have to do is create a new object and add it to the scene. This can be done by using the `addObject` function. Let's do it with a sphere. We add it inside a scope that way we don't have to rename the object and the parts of it each time.
+Adding an object to the scene is quite simple. All you have to do is create a new object and add it to the scene. This can be done by using the `addObject` function. Let's do it with a sphere. We add it inside a scope that way we don't have to rename the object and the parts of it each time we want to add another one.
 ```javascript
 {
    const sphereCenter = new wasm.Vector(0, 0, -5);
@@ -87,7 +87,7 @@ Adding an object to the scene is quite simple. All you have to do is create a ne
    console.log(sphere);
 }
 ```
-Firstly we create a `Vector` object to represent the center of the sphere and a number to represent the radius of the sphere in this case 1. We then create a `Material` object to represent the colour of the sphere and whether it emits light or not. Finally, we add the sphere to the scene and log it to the console.
+Firstly we create a `Vector` object to represent the center of the sphere and a number to represent the radius of the sphere in this case `1`. We then create a `Material` object to represent the colour of the sphere and whether it emits light or not. Finally, we add the sphere to the scene and log it to the console.
 
 
 ### How to add a Cube to the scene
@@ -104,16 +104,16 @@ Adding a cube is basically the same as adding a sphere. But instead of a `Sphere
    console.log(cube);
 }
 ```
-Here we first define the centre of the cube and then we define its size with a `Vector` of values X, Y and Z. We then create a `Material` object to represent the colour of the cube and if it emits light or not. Finally, we add the cube to the scene using the `addObject` function and log it to the console. The cube we've created has a size of 1 in all directions making this a cube and not a box and it's centred at 0, 0, -5 so five units in front of the Camera lastly we define that it should have a dark blue color.
+Here we first define the centre of the cube and then we define its size with a `Vector` of values X, Y and Z. We then create a `Material` object to represent the colour of the cube and if it emits light or not. Finally, we add the cube to the scene using the `addObject` function and log it to the console. The cube we've created has a size of `1` in all directions making this a cube and not a box and it's centred at `0, 0, -5` so five units in front of the Camera lastly we define that it should have a dark blue color.
 
 ### How to change the parameters of the renderer
 
-To change the number of samples per pixel, the reflection depth or the number of frames you would change the variables defined in the main.js file.
+To change the number of samples per pixel, the reflection depth or the number of frames you would change the variables defined in the `main.js` file.
 ```javascript
 const maxReflectionDepth = 10;
 const numSamples = 5;
 const numFrames = 1;
 ```
-This sets the settings to have a reflection depth of 10 and to project 5 rays and to only render 1 frame.
+This sets the settings to have a reflection depth of `10` and to project `5` rays and to only render `1` frame.
 
 Though defining these as global variables might not be the optimal solution I should probably define a class/struct.
