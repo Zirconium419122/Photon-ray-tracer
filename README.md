@@ -92,7 +92,7 @@ Firstly we create a `Vector` object to represent the center of the sphere and a 
 
 ### How to add a Cube to the scene
 
-Adding a cube is basically the same as adding a sphere. But instead of a `Sphere` object we use a `Cube` object and instead of a radius we define a size which is a `Vector` where X, Y and Z determine the size of the cube/box. And we add it to the scene by using the `addObject` function after having defined the cube. This we could do like so.
+Adding a cube is basically the same as adding a [sphere](#how-to-add-a-sphere-to-the-scene). But instead of a `Sphere` object we use a `Cube` object and instead of a radius we define a size which is a `Vector` where X, Y and Z determine the size of the cube/box. And we add it to the scene by using the `addObject` function after having defined the cube. This we could do like so.
 ```javascript
 {
    const cubeCenter = new wasm.Vector(0, 0, -5);
