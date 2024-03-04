@@ -2,8 +2,8 @@ extern crate console_error_panic_hook;
 
 use wasm_bindgen::prelude::*;
 
-mod Vector;
-mod VectorPool;
+mod vector;
+mod vector_pool;
 
 #[wasm_bindgen]
 pub fn init_panic_hook() {

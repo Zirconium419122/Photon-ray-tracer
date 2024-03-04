@@ -3,7 +3,7 @@ use core::panic;
 
 use wasm_bindgen::prelude::*;
 
-use crate::Vector::Vector; // Import Vector from the Vector.rs file
+use crate::vector::Vector; // Import Vector from the Vector.rs file
 
 use super::init_panic_hook;
 
