@@ -79,15 +79,15 @@ class Ray {
   getBackgroundColor() {
     // Map the vertical position of the ray to a gradient color
     const t = 0.5 * (this.direction.y + 1.0);
-  
+
     // Linear gradient from white to blue
     VectorPool.set_values(50, 1, 1, 1);
     const white = VectorPool.get(50);
     VectorPool.set_values(55, 0.5, 0.7, 1.0);
     const blue = VectorPool.get(55);
-  
+
     const gradient = white.multiply(1.0 - t).add(blue.multiply(t))
-  
+
     return gradient;
   }
 }
@@ -226,7 +226,7 @@ class Renderer {
     for (let frame = 0; frame < numFrames; frame++) {
       // Reset i to 0 at the start of each frame
       let i = 0;
-      
+
       // Loop through each pixel on the canvas
       for (let y = 0; y < canvas.height; y++) {
         for (let x = 0; x < canvas.width; x++) {
@@ -234,18 +234,17 @@ class Renderer {
           state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) % maxStateValue;
 
           // Call the PerPixel method to get the color at the pixel
-          VectorPool.set(0, this.PerPixel(x, y, state));
-          let color = VectorPool.get(0);
+          let color = this.PerPixel(x, y, state);
 
           // Set the pixel color in ImageData
           data[i] = color.x * 255;
           data[i + 1] = color.y * 255;
           data[i + 2] = color.z * 255;
           data[i + 3] = 255; // Alpha channel
-          
+
           i += 4;
         }
-        
+
         console.log(`Row number ${y} is complete`);
       }
 
@@ -277,11 +276,11 @@ class Renderer {
       // Calculate pixel coordinates for the jittered sample
       const sampleX = x + (sample + jitterX) / numSamples;
       const sampleY = y + (sample + jitterY) / numSamples;
-      
+
       // Create a ray from the camera to the current pixel
       VectorPool.set_values(11, 0, 0, 0);
       const rayOrigin = VectorPool.get(11);
-      VectorPool.set_values(12, 
+      VectorPool.set_values(12,
         (sampleX / canvas.width) * 2 - 1,
         ((sampleY / canvas.height) * 2 - 1) / aspectRatio,
         -1
@@ -293,8 +292,7 @@ class Renderer {
       state = Utils.RandomValue(sample * (sample + 568) * (sample + 234) * (sample + 345) * (sample + 123));
 
       // Trace the ray to get the color
-      VectorPool.set(13, this.TraceRay(ray, sampleX, sampleY, state));
-      const color = VectorPool.get(13);
+      const color = this.TraceRay(ray, sampleX, sampleY, state);
 
       // Accumulate the color
       accumulatedColor = accumulatedColor.add(color);
@@ -340,10 +338,8 @@ class Renderer {
 
         // Calculate the incoming light
         const material = object.material;
-        VectorPool.set(23, material.emittedColor.multiply(material.lightStrength));
-        const emittedLight = VectorPool.get(23);
-        VectorPool.set_values(24, emittedLight.x * rayColor.x, emittedLight.y * rayColor.y, emittedLight.z * rayColor.z);
-        const emission = VectorPool.get(24);
+        const emittedLight = material.emittedColor.multiply(material.lightStrength);
+        const emission = emittedLight.multiply_elementwise(rayColor);
         incomingLight = incomingLight.add(emission);
         VectorPool.set_values(21, rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
 
@@ -354,10 +350,8 @@ class Renderer {
 
       // If no intersection, return background color
       if (!closestIntersection) {
-        VectorPool.set(28, ray.getBackgroundColor());
-        let BackgroundColor = VectorPool.get(28);
-        VectorPool.set_values(29, rayColor.x * BackgroundColor.x, rayColor.y * BackgroundColor.y, rayColor.z * BackgroundColor.z);
-        return VectorPool.get(29);
+        let BackgroundColor = ray.getBackgroundColor();
+        return rayColor.multiply_elementwise(BackgroundColor);
       }
 
       closestIntersection = null;
@@ -407,7 +401,7 @@ const numFrames = 1;
 
 const scene = new Scene();
 
-// Add the light source 
+// Add the light source
 {
   const sphereCenter = new wasm.Vector(-5, -5, -10);
   const sphereRadius = 5;
