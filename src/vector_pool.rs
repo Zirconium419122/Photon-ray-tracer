@@ -18,6 +18,7 @@ pub struct VectorPool {
 #[wasm_bindgen]
 impl VectorPool {
     // Create a new VectorPool with a specified capacity
+    #[inline]
     #[wasm_bindgen(constructor)]
     pub fn new(capacity: usize) -> Self {
         init_panic_hook();
@@ -32,6 +33,7 @@ impl VectorPool {
     }
 
     // Get a Vector from the pool by index, or allocate a new one if the pool is empty
+    #[inline]
     pub fn get(&self, index: usize) -> Vector {
         if self.is_valid_index(index) {
             self.pool[index]
@@ -43,6 +45,7 @@ impl VectorPool {
     }
 
     // Set a specific index to a Vector to update the values of a specific Vector in the pool
+    #[inline]
     pub fn set(&mut self, index: usize, values: Vector) {
         if self.is_valid_index(index) {
             self.pool[index] = values;
@@ -53,6 +56,7 @@ impl VectorPool {
     }
 
     // Set a specific index to some new values to update the values of a specific Vector in the pool
+    #[inline]
     pub fn set_values(&mut self, index: usize, x: f64, y: f64, z: f64) {
         if self.is_valid_index(index) {
             self.pool[index] = Vector { x, y, z };
@@ -62,6 +66,7 @@ impl VectorPool {
         }
     }
 
+    #[inline]
     pub fn is_valid_index(&self, index: usize) -> bool {
         !self.pool.is_empty() && index < self.pool.len()
     }

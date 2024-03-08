@@ -18,6 +18,7 @@ pub struct Vector {
 // Implementation of methods for the Vector struct
 #[wasm_bindgen]
 impl Vector {
+    #[inline]
     #[wasm_bindgen(constructor)]
     pub fn new(x: f64, y: f64, z: f64) -> Vector {
         init_panic_hook();
@@ -26,6 +27,7 @@ impl Vector {
     }
 
     // Method to set a vector to specific values
+    #[inline]
     pub fn set(&mut self, x: f64, y: f64, z: f64) {
         self.x = x;
         self.y = y;
@@ -33,6 +35,7 @@ impl Vector {
     }
 
     // Method to add another vector
+    #[inline]
     pub fn add(&self, v: &Vector) -> Vector {
         Vector {
             x: self.x + v.x,
@@ -42,6 +45,7 @@ impl Vector {
     }
 
     // Method to subtract another vector
+    #[inline]
     pub fn subtract(&self, v: &Vector) -> Vector {
         Vector {
             x: self.x - v.x,
@@ -51,6 +55,7 @@ impl Vector {
     }
 
     // Method to multiply with a scalar
+    #[inline]
     pub fn multiply(&self, scalar: f64) -> Vector {
         Vector {
             x: self.x * scalar,
@@ -60,6 +65,7 @@ impl Vector {
     }
 
     // Method to multiply with a Vector
+    #[inline]
     pub fn multiply_elementwise(&self, v: &Vector) -> Vector {
         Vector {
             x: self.x * v.x,
@@ -69,6 +75,7 @@ impl Vector {
     }
 
     // Method to divide by a scalar
+    #[inline]
     pub fn divide(&self, scalar: f64) -> Vector {
         // Check for division by zero to avoid errors
         if scalar != 0.0 {
@@ -84,11 +91,13 @@ impl Vector {
     }
 
     // Method to calculate the dot product with another vector
+    #[inline]
     pub fn dot(&self, v: &Vector) -> f64 {
         self.x * v.x + self.y * v.y + self.z * v.z
     }
 
     // Method to calculate the cross product with another vector
+    #[inline]
     pub fn cross(&self, v: &Vector) -> Vector {
         Vector {
             x: self.y * v.z - self.z * v.y,
@@ -98,11 +107,13 @@ impl Vector {
     }
 
     // Method to calculate the magnitude of the vector
+    #[inline]
     pub fn magnitude(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
     // Method to normalize the vector (make it a unit vector)
+    #[inline]
     pub fn normalize(&self) -> Vector {
         let mag = self.magnitude();
         Vector {
