@@ -204,9 +204,10 @@ class Cube {
 
 // Renderer class
 class Renderer {
-	constructor(canvas, scene) {
+	constructor(canvas, scene, settings) {
 		this.canvas = canvas;
 		this.scene = scene;
+		this.settings = settings;
 	}
 
 	// Method to render the scene
@@ -223,7 +224,7 @@ class Renderer {
 		let cumulativeImageData = imageData;
 
 		// Recursivly render the scene
-		for (let frame = 0; frame < numFrames; frame++) {
+		for (let frame = 0; frame < this.settings.numFrames; frame++) {
 			// Reset i to 0 at the start of each frame
 			let i = 0;
 
@@ -250,7 +251,7 @@ class Renderer {
 
 			// Update the cumulativeImageData with averaging the pixel values over frames
 			for (let i = 0; i < data.length; i++) {
-				cumulativeImageData[i] = cumulativeImageData + (data[i] / numFrames);
+				cumulativeImageData[i] = cumulativeImageData + (data[i] / this.settings.numFrames);
 			}
 
 			console.log(`Frame: ${frame} ended with this state: ${state}`);
@@ -268,14 +269,14 @@ class Renderer {
 
 		const aspectRatio = canvas.width / canvas.height;
 
-		for (let sample = 0; sample < numSamples; sample++) {
+		for (let sample = 0; sample < this.settings.numSamples; sample++) {
 			// Calculate jittered sample position within the pixel
 			const jitterX = (Math.random() - 0.5) / 2;
 			const jitterY = (Math.random() - 0.5) / 2;
 
 			// Calculate pixel coordinates for the jittered sample
-			const sampleX = x + (sample + jitterX) / numSamples;
-			const sampleY = y + (sample + jitterY) / numSamples;
+			const sampleX = x + (sample + jitterX) / this.settings.numSamples;
+			const sampleY = y + (sample + jitterY) / this.settings.numSamples;
 
 			// Create a ray from the camera to the current pixel
 			VectorPool.set_values(11, 0, 0, 0);
@@ -299,7 +300,7 @@ class Renderer {
 		}
 
 		// Average the accumulated color over samples and return
-		return accumulatedColor.divide(numSamples);
+		return accumulatedColor.divide(this.settings.numSamples);
 	}
 
 	// Metod to calculate the color by tracing the ray
@@ -315,7 +316,7 @@ class Renderer {
 		VectorPool.set_values(21, 1, 1, 1);
 
 		// Recursivly reflect the ray
-		for (let i = 0; i < maxReflectionDepth; i++) {
+		for (let i = 0; i < this.settings.reflectionDepth; i++) {
 			// Change the state every reflection
 			state += 243723;
 
@@ -393,11 +394,21 @@ class Scene {
 	}
 }
 
+// Settings class
+class Settings {
+	constructor(reflectionDepth, numSamples, numFrames) {
+		this.reflectionDepth = reflectionDepth;
+		this.numSamples = numSamples;
+		this.numFrames = numFrames;
+	}
+}
 
 // Define the settigns of the renderer
-const maxReflectionDepth = 10;
+const reflectionDepth = 10;
 const numSamples = 5;
 const numFrames = 1;
+
+const settings = new Settings(reflectionDepth, numSamples, numFrames);
 
 const scene = new Scene();
 
@@ -459,7 +470,7 @@ const scene = new Scene();
 }
 
 // Create the renderer
-const renderer = new Renderer(canvas, scene);
+const renderer = new Renderer(canvas, scene, settings);
 
 // Render the scene
 renderer.Render()
