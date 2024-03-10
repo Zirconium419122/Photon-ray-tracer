@@ -115,5 +115,3 @@ const numSamples = 5;
 const numFrames = 1;
 ```
 This sets the settings to have a reflection depth of `10` and to project `5` rays and to only render `1` frame.
-
-Though defining these as global variables might not be the optimal solution, I should probably define a class/struct to store these parameters in.
