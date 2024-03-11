@@ -342,7 +342,7 @@ class Renderer {
 				const emittedLight = material.emittedColor.multiply(material.lightStrength);
 				const emission = emittedLight.multiply_elementwise(rayColor);
 				incomingLight = incomingLight.add(emission);
-				VectorPool.set_values(21, rayColor.x * material.color.x, rayColor.y * material.color.y, rayColor.z * material.color.z);
+				VectorPool.set(21, rayColor.multiply_elementwise(material.color));
 
 				if (object.material.lightStrength > 0) {
 					return incomingLight;
@@ -412,7 +412,7 @@ const settings = new Settings(reflectionDepth, numSamples, numFrames);
 
 const scene = new Scene();
 
-// Add the light source
+// Example usage
 {
 	const sphereCenter = new wasm.Vector(-5, -5, -10);
 	const sphereRadius = 5;
@@ -428,7 +428,6 @@ const scene = new Scene();
 	console.log(sphere);
 }
 
-// Example usage
 {
 	const sphereCenter = new wasm.Vector(0, 0, -5);
 	const sphereRadius = 1;
