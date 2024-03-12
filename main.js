@@ -293,7 +293,7 @@ class Renderer {
 			state = Utils.RandomValue(sample * (sample + 568) * (sample + 234) * (sample + 345) * (sample + 123));
 
 			// Trace the ray to get the color
-			const color = this.TraceRay(ray, sampleX, sampleY, state);
+			const color = this.TraceRay(ray, sampleX, sampleY, state, 0);
 
 			// Accumulate the color
 			accumulatedColor = accumulatedColor.add(color);
@@ -304,61 +304,62 @@ class Renderer {
 	}
 
 	// Metod to calculate the color by tracing the ray
-	TraceRay(ray, x, y, state) {
+	TraceRay(ray, x, y, state, depth) {
 		// Create seed for random number generator
 		const numPixels = canvas.width * canvas.height;
 		const pixelIndex = y * numPixels + x;
 		state += pixelIndex * 485732;
 
-		// Initialize incomingLigth and rayColor variables
-		VectorPool.set_values(20, 0, 0, 0);
-		let incomingLight = VectorPool.get(20);
-		VectorPool.set_values(21, 1, 1, 1);
-
-		// Recursivly reflect the ray
-		for (let i = 0; i < this.settings.reflectionDepth; i++) {
-			// Change the state every reflection
-			state += 243723;
-
-			let closestIntersection = this.GetClosestIntersection(ray);
-
-			let incomingLight = VectorPool.get(20);
-			let rayColor = VectorPool.get(21);
-
-			if (closestIntersection) {
-				const intersectionPoint = closestIntersection.intersectionPoint;
-				const object = closestIntersection.intersectionObject;
-
-				// Get the normal on the object
-				VectorPool.set(22, object.calculateNormal(intersectionPoint));
-				const normal = VectorPool.get(22);
-
-				// Update the origin and direction of the ray for the next iteration
-				ray.origin = intersectionPoint;
-				ray.direction = Utils.RandomHemisphereDirection(normal, state);
-
-				// Calculate the incoming light
-				const material = object.material;
-				const emittedLight = material.emittedColor.multiply(material.lightStrength);
-				const emission = emittedLight.multiply_elementwise(rayColor);
-				incomingLight = incomingLight.add(emission);
-				VectorPool.set(21, rayColor.multiply_elementwise(material.color));
-
-				if (object.material.lightStrength > 0) {
-					return incomingLight;
-				}
-			}
-
-			// If no intersection, return background color
-			if (!closestIntersection) {
-				let BackgroundColor = ray.getBackgroundColor();
-				return rayColor.multiply_elementwise(BackgroundColor);
-			}
-
-			closestIntersection = null;
+		if (depth == 0) {
+			// Initialize incomingLigth and rayColor variables
+			VectorPool.set_values(20, 0, 0, 0);
+			VectorPool.set_values(21, 1, 1, 1);
+		} else if (depth > this.settings.reflectionDepth) {
+			return new wasm.Vector(0, 0, 0);
 		}
 
-		return incomingLight;
+		// Change the state every reflection
+		state += 243723;
+
+		let closestIntersection = this.GetClosestIntersection(ray);
+
+		let incomingLight = VectorPool.get(20);
+		let rayColor = VectorPool.get(21);
+
+		if (closestIntersection) {
+			const intersectionPoint = closestIntersection.intersectionPoint;
+			const object = closestIntersection.intersectionObject;
+
+			// Get the normal on the object
+			VectorPool.set(22, object.calculateNormal(intersectionPoint));
+			const normal = VectorPool.get(22);
+
+			// Update the origin and direction of the ray for the next iteration
+			ray.origin = intersectionPoint;
+			ray.direction = Utils.RandomHemisphereDirection(normal, state);
+
+			// Calculate the incoming light
+			const material = object.material;
+			const emittedLight = material.emittedColor.multiply(material.lightStrength);
+			const emission = emittedLight.multiply_elementwise(rayColor);
+			incomingLight = incomingLight.add(emission);
+			VectorPool.set(21, rayColor.multiply_elementwise(material.color));
+
+			if (object.material.lightStrength > 0) {
+				return incomingLight;
+			}
+		}
+
+		// If no intersection, return background color
+		if (!closestIntersection) {
+			let BackgroundColor = ray.getBackgroundColor();
+			return rayColor.multiply_elementwise(BackgroundColor);
+		}
+
+		closestIntersection = null;
+
+		// Recursivly reflect the ray
+		return this.TraceRay(ray, x, y, state, depth + 1);
 	}
 
 	GetClosestIntersection(ray) {
