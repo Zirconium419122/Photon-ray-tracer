@@ -321,7 +321,7 @@ class Renderer {
 		// Change the state every reflection
 		state += 243723;
 
-		let closestIntersection = this.GetClosestIntersection(ray);
+		let closestIntersection = this.getclosestintersection(ray);
 
 		let incomingLight = VectorPool.get(20);
 		let rayColor = VectorPool.get(21);
@@ -331,8 +331,7 @@ class Renderer {
 			const object = closestIntersection.intersectionObject;
 
 			// Get the normal on the object
-			VectorPool.set(22, object.calculateNormal(intersectionPoint));
-			const normal = VectorPool.get(22);
+			const normal = object.calculateNormal(intersectionPoint);
 
 			// Update the origin and direction of the ray for the next iteration
 			ray.origin = intersectionPoint;
@@ -356,13 +355,11 @@ class Renderer {
 			return rayColor.multiply_elementwise(BackgroundColor);
 		}
 
-		closestIntersection = null;
-
 		// Recursivly reflect the ray
 		return this.TraceRay(ray, x, y, state, depth + 1);
 	}
 
-	GetClosestIntersection(ray) {
+	getclosestintersection(ray) {
 		let closestIntersection = null;
 
 		// Test for intersections with objects in the scene
