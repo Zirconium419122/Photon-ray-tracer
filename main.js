@@ -35,9 +35,8 @@ class Utils {
 			const sqrDstFromCenter = pointInCube.dot(pointInCube);
 
 			// If point is inside sphere, scale it to lie on the surface (otherwise, keep trying)
-			if (sqrDstFromCenter <= 1) {
+			if (sqrDstFromCenter <= 1)
 				return pointInCube.divide(Math.sqrt(sqrDstFromCenter));
-			}
 		}
 
 		return 0;
@@ -344,9 +343,8 @@ class Renderer {
 			incomingLight = incomingLight.add(emission);
 			VectorPool.set(21, rayColor.multiply_elementwise(material.color));
 
-			if (object.material.lightStrength > 0) {
+			if (object.material.lightStrength > 0)
 				return incomingLight;
-			}
 		}
 
 		// If no intersection, return background color
@@ -366,14 +364,9 @@ class Renderer {
 		for (const object of this.scene.objects) {
 			const intersectionResult = object.intersect(ray);
 
-			if (intersectionResult) {
-				if (
-					!closestIntersection ||
-					intersectionResult.t < closestIntersection.t
-				) {
+			if (intersectionResult)
+				if (!closestIntersection || intersectionResult.t < closestIntersection.t)
 					closestIntersection = intersectionResult;
-				}
-			}
 		}
 
 		return closestIntersection;
