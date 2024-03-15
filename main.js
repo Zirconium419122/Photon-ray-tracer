@@ -313,14 +313,13 @@ class Renderer {
 			// Initialize incomingLigth and rayColor variables
 			VectorPool.set_values(20, 0, 0, 0);
 			VectorPool.set_values(21, 1, 1, 1);
-		} else if (depth > this.settings.reflectionDepth) {
+		} else if (depth > this.settings.reflectionDepth)
 			return new wasm.Vector(0, 0, 0);
-		}
 
 		// Change the state every reflection
 		state += 243723;
 
-		let closestIntersection = this.getclosestintersection(ray);
+		let closestIntersection = this.GetClosestIntersection(ray);
 
 		let incomingLight = VectorPool.get(20);
 		let rayColor = VectorPool.get(21);
@@ -357,7 +356,7 @@ class Renderer {
 		return this.TraceRay(ray, x, y, state, depth + 1);
 	}
 
-	getclosestintersection(ray) {
+	GetClosestIntersection(ray) {
 		let closestIntersection = null;
 
 		// Test for intersections with objects in the scene
