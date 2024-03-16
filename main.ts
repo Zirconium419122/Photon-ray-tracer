@@ -6,8 +6,16 @@ await init();
 const VectorPool = new wasm.VectorPool(100);
 
 // Get the canvas element and the 2d context
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const canvas: HTMLCanvasElement = document.getElementById("canvas") as HTMLCanvasElement;
+const ctx: CanvasRenderingContext2D = canvas?.getContext('2d') as CanvasRenderingContext2D;
+
+if (!canvas) {
+	console.error("Canvas element with id 'canvas' not found");
+}
+
+if (!ctx) {
+	console.error("Unable to get 2D context for canvas");
+}
 
 // Set the width and height of the canvas
 canvas.width = 400;  // Replace 800 with your desired width
@@ -24,7 +32,7 @@ class Utils {
 		return result / 4294967295.0;
 	}
 
-	static RandomDirection(state) {
+	static RandomDirection(state: number) {
 		for (let limit = 0; limit < 100; limit++) {
 			const x = this.RandomValue(state) * 2 - 1;
 			const y = this.RandomValue(state += 13146368) * 2 - 1;
@@ -39,7 +47,7 @@ class Utils {
 				return pointInCube.divide(Math.sqrt(sqrDstFromCenter));
 		}
 
-		return 0;
+		return new wasm.Vector(0, 0, 0);
 	}
 
 	static RandomHemisphereDirection(normal, state) {
@@ -53,7 +61,12 @@ class Utils {
 
 // Material class
 class Material {
-	constructor(color, reflectionCoeff, emittedColor = new wasm.Vector(0, 0, 0), lightStrength = 0) {
+	color: wasm.Vector;
+	reflectionCoeff: number;
+	emittedColor: wasm.Vector;
+	lightStrength: number;
+	
+	constructor(color: wasm.Vector, reflectionCoeff: number = 0, emittedColor: wasm.Vector = new wasm.Vector(0, 0, 0), lightStrength: number = 0) {
 		this.color = color;  // Surface color of the material
 		this.reflectionCoeff = reflectionCoeff; // Reflection coefficient (0 for no reflection, 1 for full reflection)
 		this.emittedColor = emittedColor; // Emitted light color
@@ -64,13 +77,16 @@ class Material {
 
 // Ray class
 class Ray {
-	constructor(origin, direction) {
+	origin: wasm.Vector;
+	direction: wasm.Vector;
+
+	constructor(origin: wasm.Vector, direction: wasm.Vector) {
 		this.origin = origin;       // Vector representing the ray's origin
 		this.direction = direction; // Vector representing the ray's direction
 	}
 
 	// Function to get a point along the ray given a parameter t
-	pointAtParameter(t) {
+	pointAtParameter(t: number) {
 		return this.origin.add(this.direction.multiply(t));
 	}
 
@@ -94,7 +110,11 @@ class Ray {
 
 // Sphere class
 class Sphere {
-	constructor(center, radius, material) {
+	center: wasm.Vector;
+	radius: number;
+	material: Material;
+
+	constructor(center: wasm.Vector, radius: number, material: Material) {
 		this.center = center;     // Vector representing the center of the sphere
 		this.radius = radius;     // Radius of the sphere
 		this.material = material; // Material of the sphere
@@ -130,14 +150,18 @@ class Sphere {
 
 // Cube class
 class Cube {
-	constructor(center, size, material) {
+	center: wasm.Vector;
+	size: wasm.Vector;
+	material: Material;
+
+	constructor(center: wasm.Vector, size: wasm.Vector, material: Material) {
 		this.center = center;     // Vector representing the center of the cube
 		this.size = size;         // Vector representing the lengths of the three sides (x, y, z)
 		this.material = material; // Material of the cube
 	}
 
 	// Method to test if a ray intersects with the cube
-	intersect(ray) {
+	intersect(ray: Ray) {
 		const halfSize = this.size.multiply(0.5);
 
 		// Calculate the minimum and maximum extents along each axis
@@ -175,7 +199,7 @@ class Cube {
 	}
 
 	// Method to calculate the normal at a point on the cube
-	calculateNormal(point) {
+	calculateNormal(point: wasm.Vector) {
 		// Calculate the differences between the point's coordinates and the cube's center
 		const dx = point.x - this.center.x;
 		const dy = point.y - this.center.y;
@@ -203,7 +227,11 @@ class Cube {
 
 // Renderer class
 class Renderer {
-	constructor(canvas, scene, settings) {
+	canvas: HTMLCanvasElement;
+	scene: Scene;
+	settings: Settings;
+
+	constructor(canvas: HTMLCanvasElement, scene: Scene, settings: Settings) {
 		this.canvas = canvas;
 		this.scene = scene;
 		this.settings = settings;
@@ -250,7 +278,7 @@ class Renderer {
 
 			// Update the cumulativeImageData with averaging the pixel values over frames
 			for (let i = 0; i < data.length; i++) {
-				cumulativeImageData[i] = cumulativeImageData + (data[i] / this.settings.numFrames);
+				cumulativeImageData[i] = cumulativeImageData[i] + (data[i] / this.settings.numFrames);
 			}
 
 			console.log(`Frame: ${frame} ended with this state: ${state}`);
@@ -356,15 +384,17 @@ class Renderer {
 		return this.TraceRay(ray, x, y, state, depth + 1);
 	}
 
-	GetClosestIntersection(ray) {
-		let closestIntersection = null;
+	GetClosestIntersection(ray: Ray) {
+		let closestIntersection: any = null;
 
 		// Test for intersections with objects in the scene
 		for (const object of this.scene.objects) {
 			const intersectionResult = object.intersect(ray);
 
 			if (intersectionResult)
-				if (!closestIntersection || intersectionResult.t < closestIntersection.t)
+				if (!closestIntersection)
+					closestIntersection = intersectionResult;
+				else if (intersectionResult.t < closestIntersection.t)
 					closestIntersection = intersectionResult;
 		}
 
@@ -374,19 +404,25 @@ class Renderer {
 
 // Scene class
 class Scene {
+	objects;
+
 	constructor() {
 		this.objects = []; // Array to store the objects in the scene
 	}
 
 	// Method to add objects to the scene
-	addObject(object) {
+	addObject(object: Sphere | Cube) {
 		this.objects.push(object);
 	}
 }
 
 // Settings class
 class Settings {
-	constructor(reflectionDepth, numSamples, numFrames) {
+	reflectionDepth: number;
+	numSamples: number;
+	numFrames: number;
+
+	constructor(reflectionDepth: number, numSamples: number, numFrames: number) {
 		this.reflectionDepth = reflectionDepth;
 		this.numSamples = numSamples;
 		this.numFrames = numFrames;
