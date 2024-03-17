@@ -25,7 +25,7 @@ canvas.height = 300; // Replace 600 with your desired height
 class Utils {
 	// PCG (permuated congruentila generator). Thanks to:
 	// www.pcg-random.org and www.shadertoy.com/view/XlGcRh
-	static RandomValue(state) {
+	static RandomValue(state: number) {
 		state = state * 747796405 + 2891336453;
 		let result = ((state >> ((state >> 28) + 4)) ^ state) * 277803737;
 		result = (result >> 22) ^ result;
@@ -50,7 +50,7 @@ class Utils {
 		return new wasm.Vector(0, 0, 0);
 	}
 
-	static RandomHemisphereDirection(normal, state) {
+	static RandomHemisphereDirection(normal: wasm.Vector, state: number) {
 		VectorPool.set(45, this.RandomDirection(state));
 		const direction = VectorPool.get(45);
 		VectorPool.set(46, direction.multiply(Math.sign(normal.dot(direction))));
@@ -121,7 +121,7 @@ class Sphere {
 	}
 
 	// Method to test if a ray intersects with the sphere
-	intersect(ray) {
+	intersect(ray: Ray) {
 		const oc = ray.origin.subtract(this.center);
 		const a = ray.direction.dot(ray.direction);
 		const b = oc.dot(ray.direction) * 2;
@@ -143,7 +143,7 @@ class Sphere {
 	}
 
 	// Method to calculate the normal at a point on the sphere
-	calculateNormal(point) {
+	calculateNormal(point: wasm.Vector) {
 		return point.subtract(this.center).normalize();
 	}
 }
@@ -289,7 +289,7 @@ class Renderer {
 	}
 
 	// Method to render each pixel
-	PerPixel(x, y, state) {
+	PerPixel(x: number, y: number, state: number) {
 		// Make the accumulateColor variable
 		VectorPool.set_values(10, 0, 0, 0);
 		let accumulatedColor = VectorPool.get(10);
@@ -331,7 +331,7 @@ class Renderer {
 	}
 
 	// Metod to calculate the color by tracing the ray
-	TraceRay(ray, x, y, state, depth) {
+	TraceRay(ray: Ray, x: number, y: number, state: number, depth: number) {
 		// Create seed for random number generator
 		const numPixels = canvas.width * canvas.height;
 		const pixelIndex = y * numPixels + x;
@@ -404,7 +404,7 @@ class Renderer {
 
 // Scene class
 class Scene {
-	objects;
+	objects: (Sphere | Cube)[];
 
 	constructor() {
 		this.objects = []; // Array to store the objects in the scene
