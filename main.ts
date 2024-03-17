@@ -4,7 +4,11 @@ import init, * as wasm from "./pkg/raytracer.js"
 await init();
 
 // Get the canvas element
-const canvas = document.getElementById('canvas');
+const canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement;
+
+if (!canvas) {
+  throw new Error("Canvas element with id 'canvas' not found");
+}
 
 // Set the width and height of the canvas
 canvas.width = 800;  // Replace 800 with your desired width
