@@ -32,7 +32,7 @@ class Utils {
 		return result / 4294967295.0;
 	}
 
-	static RandomDirection(state: number) {
+	static RandomDirection(state: number): wasm.Vector {
 		for (let limit = 0; limit < 100; limit++) {
 			const x = this.RandomValue(state) * 2 - 1;
 			const y = this.RandomValue(state += 13146368) * 2 - 1;
@@ -50,7 +50,7 @@ class Utils {
 		return new wasm.Vector(0, 0, 0);
 	}
 
-	static RandomHemisphereDirection(normal: wasm.Vector, state: number) {
+	static RandomHemisphereDirection(normal: wasm.Vector, state: number): wasm.Vector {
 		VectorPool.set(45, this.RandomDirection(state));
 		const direction = VectorPool.get(45);
 		VectorPool.set(46, direction.multiply(Math.sign(normal.dot(direction))));
@@ -91,7 +91,7 @@ class Ray {
 	}
 
 	// Function to get the background color
-	getBackgroundColor() {
+	getBackgroundColor(): wasm.Vector {
 		// Map the vertical position of the ray to a gradient color
 		const t = 0.5 * (this.direction.y + 1.0);
 
@@ -143,7 +143,7 @@ class Sphere {
 	}
 
 	// Method to calculate the normal at a point on the sphere
-	calculateNormal(point: wasm.Vector) {
+	calculateNormal(point: wasm.Vector): wasm.Vector {
 		return point.subtract(this.center).normalize();
 	}
 }
@@ -199,7 +199,7 @@ class Cube {
 	}
 
 	// Method to calculate the normal at a point on the cube
-	calculateNormal(point: wasm.Vector) {
+	calculateNormal(point: wasm.Vector): wasm.Vector {
 		// Calculate the differences between the point's coordinates and the cube's center
 		const dx = point.x - this.center.x;
 		const dy = point.y - this.center.y;
@@ -289,7 +289,7 @@ class Renderer {
 	}
 
 	// Method to render each pixel
-	PerPixel(x: number, y: number, state: number) {
+	PerPixel(x: number, y: number, state: number): wasm.Vector {
 		// Make the accumulateColor variable
 		VectorPool.set_values(10, 0, 0, 0);
 		let accumulatedColor = VectorPool.get(10);
@@ -331,7 +331,7 @@ class Renderer {
 	}
 
 	// Metod to calculate the color by tracing the ray
-	TraceRay(ray: Ray, x: number, y: number, state: number, depth: number) {
+	TraceRay(ray: Ray, x: number, y: number, state: number, depth: number): wasm.Vector {
 		// Create seed for random number generator
 		const numPixels = canvas.width * canvas.height;
 		const pixelIndex = y * numPixels + x;
