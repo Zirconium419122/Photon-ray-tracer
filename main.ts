@@ -25,7 +25,7 @@ canvas.height = 300; // Replace 600 with your desired height
 class Utils {
 	// PCG (permuated congruentila generator). Thanks to:
 	// www.pcg-random.org and www.shadertoy.com/view/XlGcRh
-	static RandomValue(state: number) {
+	static RandomValue(state: number): number {
 		state = state * 747796405 + 2891336453;
 		let result = ((state >> ((state >> 28) + 4)) ^ state) * 277803737;
 		result = (result >> 22) ^ result;
@@ -86,7 +86,7 @@ class Ray {
 	}
 
 	// Function to get a point along the ray given a parameter t
-	pointAtParameter(t: number) {
+	pointAtParameter(t: number): wasm.Vector {
 		return this.origin.add(this.direction.multiply(t));
 	}
 
@@ -121,7 +121,7 @@ class Sphere {
 	}
 
 	// Method to test if a ray intersects with the sphere
-	intersect(ray: Ray) {
+	intersect(ray: Ray): any {
 		const oc = ray.origin.subtract(this.center);
 		const a = ray.direction.dot(ray.direction);
 		const b = oc.dot(ray.direction) * 2;
@@ -161,7 +161,7 @@ class Cube {
 	}
 
 	// Method to test if a ray intersects with the cube
-	intersect(ray: Ray) {
+	intersect(ray: Ray): any {
 		const halfSize = this.size.multiply(0.5);
 
 		// Calculate the minimum and maximum extents along each axis
@@ -238,7 +238,7 @@ class Renderer {
 	}
 
 	// Method to render the scene
-	Render() {
+	Render(): void {
 		// Create new ImageData object for direct pixel manipulation
 		const imageData = ctx.createImageData(canvas.width, canvas.height);
 
@@ -384,12 +384,12 @@ class Renderer {
 		return this.TraceRay(ray, x, y, state, depth + 1);
 	}
 
-	GetClosestIntersection(ray: Ray) {
+	GetClosestIntersection(ray: Ray): any {
 		let closestIntersection: any = null;
 
 		// Test for intersections with objects in the scene
 		for (const object of this.scene.objects) {
-			const intersectionResult = object.intersect(ray);
+			const intersectionResult: any = object.intersect(ray);
 
 			if (intersectionResult)
 				if (!closestIntersection)
