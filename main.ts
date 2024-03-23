@@ -10,11 +10,11 @@ const canvas: HTMLCanvasElement = document.getElementById("canvas") as HTMLCanva
 const ctx: CanvasRenderingContext2D = canvas?.getContext('2d') as CanvasRenderingContext2D;
 
 if (!canvas) {
-	console.error("Canvas element with id 'canvas' not found");
+	throw new Error("Canvas element with id 'canvas' not found");
 }
 
 if (!ctx) {
-	console.error("Unable to get 2D context for canvas");
+	throw new Error("Unable to get 2D context for canvas");
 }
 
 // Set the width and height of the canvas
