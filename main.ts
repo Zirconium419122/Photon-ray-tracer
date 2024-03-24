@@ -9,13 +9,11 @@ const VectorPool = new wasm.VectorPool(100);
 const canvas: HTMLCanvasElement = document.getElementById("canvas") as HTMLCanvasElement;
 const ctx: CanvasRenderingContext2D = canvas?.getContext('2d') as CanvasRenderingContext2D;
 
-if (!canvas) {
+if (!canvas)
 	throw new Error("Canvas element with id 'canvas' not found");
-}
 
-if (!ctx) {
+if (!ctx)
 	throw new Error("Unable to get 2D context for canvas");
-}
 
 // Set the width and height of the canvas
 canvas.width = 400;  // Replace 800 with your desired width
