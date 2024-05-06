@@ -1,7 +1,7 @@
 extern crate console_error_panic_hook;
 
 use core::panic;
-use std::ops::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div};
+use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign};
 
 use wasm_bindgen::prelude::*;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
@@ -191,7 +191,7 @@ pub struct Random {
 impl Random {
     pub fn new(seed: u32) -> Random {
         init_panic_hook();
-        
+
         Random { state: seed }
     }
 
@@ -261,10 +261,17 @@ pub struct Intersections {
 
 impl Intersections {
     // Method / Function to create a new Intersections struct
-    pub fn new(sphere_intersection: Option<Intersection<Sphere>>, cube_intersection: Option<Intersection<Cube>>) -> Intersections {
+    pub fn new(
+        sphere_intersection: Option<Intersection<Sphere>>,
+        cube_intersection: Option<Intersection<Cube>>,
+    ) -> Intersections {
         init_panic_hook();
-        
-        Intersections { sphere_intersection, cube_intersection, closer_type: None }
+
+        Intersections {
+            sphere_intersection,
+            cube_intersection,
+            closer_type: None,
+        }
     }
 
     // Method / Function to determine the which intersection is closer
@@ -293,7 +300,6 @@ impl Intersections {
     }
 }
 
-
 // Rust Material struct
 #[wasm_bindgen]
 #[derive(Debug, Copy, Clone)]
@@ -316,7 +322,7 @@ impl Material {
         emission_power: f64,
     ) -> Material {
         init_panic_hook();
-        
+
         Material {
             color,
             roughness,
@@ -339,7 +345,7 @@ impl Ray {
     #[wasm_bindgen(constructor)]
     pub fn new(origin: Vector, direction: Vector) -> Ray {
         init_panic_hook();
-        
+
         Ray { origin, direction }
     }
 
@@ -349,12 +355,12 @@ impl Ray {
 
     pub fn get_background_color(&self) -> Vector {
         let t = 0.5 * (self.direction.y + 1.0);
-    
+
         let white = Vector { x: 1.0, y: 1.0, z: 1.0 };
         let blue = Vector { x: 0.5, y: 0.7, z: 1.0 };
-    
+
         let gradient = white * (1.0 - t) + (blue * t);
-    
+
         gradient
     }
 }
@@ -373,7 +379,7 @@ impl Sphere {
     #[wasm_bindgen(constructor)]
     pub fn new(center: Vector, radius: f64, material: Material) -> Sphere {
         init_panic_hook();
-        
+
         Sphere {
             center,
             radius,
@@ -525,7 +531,11 @@ pub struct Settings {
 impl Settings {
     #[wasm_bindgen(constructor)]
     pub fn new(max_reflection_depth: u32, num_samples: u32, num_frames: u32) -> Settings {
-        Settings { max_reflection_depth, num_samples, num_frames }
+        Settings {
+            max_reflection_depth,
+            num_samples,
+            num_frames,
+        }
     }
 }
 
@@ -573,7 +583,11 @@ impl Renderer {
     pub fn new(canvas: HtmlCanvasElement, scene: Scene, settings: Settings) -> Renderer {
         init_panic_hook();
 
-        Renderer { canvas, scene, settings }
+        Renderer {
+            canvas,
+            scene,
+            settings,
+        }
     }
 
     pub fn render(&self) -> Result<ImageData, JsValue> {
@@ -628,10 +642,13 @@ impl Renderer {
                 let bar_length: f32 = 50.0;
                 let fraction: f32 = y as f32 / self.canvas.height() as f32;
                 let filled_length: usize = (bar_length * fraction) as usize;
-                let bar: String = format!("[{}{}] {:.2}%", "#".repeat(filled_length), "-".repeat(bar_length as usize - filled_length), fraction * 100.0);
-                console_log(
-                    &bar
+                let bar: String = format!(
+                    "[{}{}] {:.2}%",
+                    "#".repeat(filled_length),
+                    "-".repeat(bar_length as usize - filled_length),
+                    fraction * 100.0
                 );
+                console_log(&bar);
             }
 
             // Update the cumulativeImageData with averaging the pixel
@@ -640,7 +657,8 @@ impl Renderer {
             }
 
             console_log(&format!(
-                "Frame: {} ended with this state: {}", frame, state
+                "Frame: {} ended with this state: {}",
+                frame, state
             ));
         }
 
@@ -670,7 +688,11 @@ impl Renderer {
 
             // Create a ray from the camera to the current pixel
             let aspect_ratio = self.canvas.width() as f64 / self.canvas.height() as f64;
-            let ray_origin = Vector { x: 0.0, y: 0.0, z: 0.0 };
+            let ray_origin = Vector {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            };
             let ray_direction = Vector {
                 x: (sample_x / self.canvas.width() as f64) * 2.0 - 1.0,
                 y: ((sample_y / self.canvas.height() as f64) * 2.0 - 1.0) / aspect_ratio,
