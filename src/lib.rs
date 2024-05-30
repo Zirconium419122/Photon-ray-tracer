@@ -196,8 +196,8 @@ impl Random {
     }
 
     pub fn random_value(&mut self) -> f64 {
-        self.state = self.state * 747796405 + 2891336453;
-        let mut result = ((self.state >> ((self.state >> 28) + 4)) ^ self.state) * 277803737;
+        self.state = self.state.wrapping_mul(747796405).wrapping_add(2891336453);
+        let mut result = ((self.state >> ((self.state >> 28) + 4)) ^ self.state).wrapping_add(277803737);
         result = (result >> 22) ^ result;
         result as f64 / 4294967295.0
     }
