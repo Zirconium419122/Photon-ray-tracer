@@ -3,7 +3,7 @@ name = "photon-ray-tracer"
 version = "0.1.0"
 edition = "2021"
 
-description = "A raytracer writen in Rust and JavaScript"
+description = "A raytracer writen in Rust and TypeScript"
 repository = "https://github.com/Zirconium419122/Photon-ray-tracer/"
 licence = "MIT"
 
@@ -13,5 +13,15 @@ licence = "MIT"
 crate-type = ["cdylib"]
 
 [dependencies]
-wasm-bindgen = "0.2.91"
+rand = "0.8.5"
+getrandom = { version = "0.2.12", features = ["js"] }
+wasm-bindgen = "0.2.90"
 console_error_panic_hook = "0.1.7"
+
+[dependencies.web-sys]
+version = "0.3.67"
+features = [
+  "CanvasRenderingContext2d",
+  "HtmlCanvasElement", 
+  "ImageData"
+]
