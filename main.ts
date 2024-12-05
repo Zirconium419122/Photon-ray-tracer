@@ -1,5 +1,5 @@
-import './style.css'
-import init, * as wasm from "./pkg/raytracer.js"
+import './style.css';
+import init, * as wasm from './pkg/photon_ray_tracer.js';
 
 await init();
 
@@ -7,85 +7,105 @@ await init();
 const canvas: HTMLCanvasElement = document.getElementById('canvas') as HTMLCanvasElement;
 
 if (!canvas) {
-    throw new Error("Canvas element with id 'canvas' not found");
+	throw new Error("Canvas element with id 'canvas' not found");
 }
 
 // Set the width and height of the canvas
-canvas.width = 800;  // Replace 800 with your desired width
+canvas.width = 800; // Replace 800 with your desired width
 canvas.height = 600; // Replace 600 with your desired height
 
 async function run() {
-    // Define the settigns of the renderer
-    const maxReflectionDepth = 10;
-    const numSamples = 5;
-    const numFrames = 1;
-    const settings = new wasm.Settings(maxReflectionDepth, numSamples, numFrames);
+	// Define the settigns of the renderer
+	const maxReflectionDepth = 10;
+	const numSamples = 5;
+	const numFrames = 10;
+	const settings = new wasm.Settings(maxReflectionDepth, numSamples, numFrames);
 
-    // Create the scene
-    const scene = new wasm.Scene();
+	// Create the scene
+	const scene = new wasm.Scene();
 
-    // Add the light source 
-    {
-        const sphereCenter = new wasm.Vector(-5, -5, -10);
-        const sphereRadius = 5;
-        const sphereMaterial = new wasm.Material(
-          new wasm.Vector(0, 0, 0),
-          1,
-          new wasm.Vector(1, 1, 1),
-          2
-        );
-        const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
+	// Add the light source
+	{
+		const sphereCenter = new wasm.Vector(-5, -5, -10);
+		const sphereRadius = 5;
+		const sphereMaterial = new wasm.Material(
+			new wasm.Vector(0, 0, 0),
+			1,
+			new wasm.Vector(1, 1, 1),
+			2
+		);
+		const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
 
-        scene.add_sphere(sphere);
-        console.log(sphere);
-    }
-    
-    // Add the rest of the objects
-    {
-        const sphereCenter = new wasm.Vector(0, 0, -5);
-        const sphereRadius = 1;
-        const sphereMaterial = new wasm.Material(new wasm.Vector(1, 0, 0), 1, new wasm.Vector(0, 0, 0), 0);
-        const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
+		scene.add_sphere(sphere);
+		console.log(sphere);
+	}
 
-        scene.add_sphere(sphere);
-        console.log(sphere);
-    }
+	// Add the rest of the objects
+	{
+		const sphereCenter = new wasm.Vector(0, 0, -5);
+		const sphereRadius = 1;
+		const sphereMaterial = new wasm.Material(
+			new wasm.Vector(1, 0, 0),
+			1,
+			new wasm.Vector(0, 0, 0),
+			0
+		);
+		const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
 
-    {
-        const sphereCenter = new wasm.Vector(3, 1, -10);
-        const sphereRadius = 1;
-        const sphereMaterial = new wasm.Material(new wasm.Vector(0, 1, 0), 1, new wasm.Vector(0, 0, 0), 0);
-        const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
+		scene.add_sphere(sphere);
+		console.log(sphere);
+	}
 
-        scene.add_sphere(sphere);
-        console.log(sphere);
-    }
+	{
+		const sphereCenter = new wasm.Vector(3, 1, -10);
+		const sphereRadius = 1;
+		const sphereMaterial = new wasm.Material(
+			new wasm.Vector(0, 1, 0),
+			1,
+			new wasm.Vector(0, 0, 0),
+			0
+		);
+		const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
 
-    {
-        const sphereCenter = new wasm.Vector(0, 5, -5);
-        const sphereRadius = 4.5;
-        const sphereMaterial = new wasm.Material(new wasm.Vector(0.5, 0.5, 0.5), 1, new wasm.Vector(0, 0, 0), 0);
-        const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
+		scene.add_sphere(sphere);
+		console.log(sphere);
+	}
 
-        scene.add_sphere(sphere);
-        console.log(sphere);
-    }
+	{
+		const sphereCenter = new wasm.Vector(0, 5, -5);
+		const sphereRadius = 4.5;
+		const sphereMaterial = new wasm.Material(
+			new wasm.Vector(0.5, 0.5, 0.5),
+			1,
+			new wasm.Vector(0, 0, 0),
+			0
+		);
+		const sphere = new wasm.Sphere(sphereCenter, sphereRadius, sphereMaterial);
 
-    {
-        const cubeCenter = new wasm.Vector(-2, 1, -5);
-        const cubeSize = new wasm.Vector(1, 1, 1);
-        const cubeMaterial = new wasm.Material(new wasm.Vector(0, 0, 1), 1, new wasm.Vector(0, 0, 0), 0);
-        const cube = new wasm.Cube(cubeCenter, cubeSize, cubeMaterial);
+		scene.add_sphere(sphere);
+		console.log(sphere);
+	}
 
-        scene.add_cube(cube);
-        console.log(cube);
-    }
+	{
+		const cubeCenter = new wasm.Vector(-2, 1, -5);
+		const cubeSize = new wasm.Vector(1, 1, 1);
+		const cubeMaterial = new wasm.Material(
+			new wasm.Vector(0, 0, 1),
+			1,
+			new wasm.Vector(0, 0, 0),
+			0
+		);
+		const cube = new wasm.Cube(cubeCenter, cubeSize, cubeMaterial);
 
-    // Create the renderer
-    const renderer = new wasm.Renderer(canvas, scene, settings);
+		scene.add_cube(cube);
+		console.log(cube);
+	}
 
-    // Render the scene
-    renderer.render();
+	// Create the renderer
+	const renderer = new wasm.Renderer(canvas, scene, settings);
+
+	// Render the scene
+	renderer.run();
 }
 
 run();

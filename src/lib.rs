@@ -1,9 +1,9 @@
 extern crate console_error_panic_hook;
 
 use core::panic;
-use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign};
+use std::{cell::RefCell, ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign}, rc::Rc};
 
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{prelude::*, Clamped};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
 
 use rand::random;
@@ -541,7 +541,7 @@ impl Settings {
 
 // Rust Scene struct
 #[wasm_bindgen]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Scene {
     spheres: Vec<Sphere>,
     cubes: Vec<Cube>,
@@ -570,31 +570,65 @@ impl Scene {
 
 // Rust Renderer struct
 #[wasm_bindgen]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Renderer {
     canvas: HtmlCanvasElement,
     scene: Scene,
     settings: Settings,
+    cumulative_image_data: ImageData,
+    current_frame: u32,
 }
 
 #[wasm_bindgen]
 impl Renderer {
     #[wasm_bindgen(constructor)]
-    pub fn new(canvas: HtmlCanvasElement, scene: Scene, settings: Settings) -> Renderer {
+    pub fn new(canvas: HtmlCanvasElement, scene: Scene, settings: Settings) -> Result<Renderer, JsValue> {
         init_panic_hook();
 
-        Renderer {
-            canvas,
+        Ok(Renderer {
+            canvas: canvas.clone(),
             scene,
             settings,
-        }
+            cumulative_image_data: ImageData::new_with_sw(
+                canvas.width(),
+                canvas.height()
+            )?,
+            current_frame: 0,
+        })
     }
 
-    pub fn render(&self) -> Result<ImageData, JsValue> {
+    pub fn run(&self) -> Result<(), JsValue> {
+        Renderer::render_next_frame(Rc::new(RefCell::new(self.clone())))?;
+
+        Ok(())
+    }
+
+    fn render_next_frame(self_rc: Rc<RefCell<Renderer>>) -> Result<(), JsValue> {
+        let window = web_sys::window().unwrap();
+        let self_clone = self_rc.clone();
+        let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
+            let mut renderer = self_clone.borrow_mut();
+            if renderer.current_frame < renderer.settings.num_frames {
+                renderer.render_frame().unwrap();
+                renderer.current_frame += 1;
+                Renderer::render_next_frame(self_clone.clone()).unwrap();
+            }
+        }));
+
+        window
+           .request_animation_frame(closure.as_ref().unchecked_ref())?;
+
+        closure.forget();
+
+        Ok(())
+    }
+
+    fn render_frame(&mut self) -> Result<(), JsValue> {
         // Get canvas and context
         let context = self
             .canvas
-            .get_context("2d")?
+            .get_context("2d")
+            .unwrap()
             .unwrap()
             .dyn_into::<CanvasRenderingContext2d>()?;
 
@@ -607,73 +641,48 @@ impl Renderer {
         // Access the pixel data array
         let mut data = image_data.data();
 
-        let mut state = 367380976;
+        let mut state;
         let max_state_value = 1e9;
 
-        let cumulative_image_data = ImageData::new_with_sw(
-            self.canvas.width(),
-            self.canvas.width(),
-        )?;
+        // Loop through each pixel on the canvas
+        for y in 0..self.canvas.height() {
+            for x in 0..self.canvas.width() {
+                state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676)) as u32 % max_state_value as u32;
+                let color = self.per_pixel(x as f64, y as f64, state);
 
-        let mut cumulative_data = cumulative_image_data.data();
-
-        // Recursively render the scene
-        for frame in 0..self.settings.num_frames {
-            let mut i = 0;
-
-            // Loop through each pixel on the canvas
-            for y in 0..self.canvas.height() {
-                for x in 0..self.canvas.width() {
-                    // Get the state for the number generator
-                    state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676) * (frame + 1)) as u32 % max_state_value as u32;
-
-                    // Call the per_pixel function to get the color at the pixel
-                    let color = self.per_pixel(x as f64, y as f64, state);
-
-                    // Set the pixel color in ImageData
-                    data[i] = (color.x * 255.0) as u8;
-                    data[i + 1] = (color.y * 255.0) as u8;
-                    data[i + 2] = (color.z * 255.0) as u8;
-                    data[i + 3] = 255; // Alpha channel
-
-                    i += 4;
-                }
-
-                let bar_length: f32 = 50.0;
-                let fraction: f32 = y as f32 / self.canvas.height() as f32;
-                let filled_length: usize = (bar_length * fraction) as usize;
-                let bar: String = format!(
-                    "[{}{}] {:.2}%",
-                    "#".repeat(filled_length),
-                    "-".repeat(bar_length as usize - filled_length),
-                    fraction * 100.0
-                );
-                console_log(&bar);
+                let i = ((y * self.canvas.width() + x) * 4) as usize;
+                data[i] = (color.x * 255.0) as u8;
+                data[i + 1] = (color.y * 255.0) as u8;
+                data[i + 2] = (color.z * 255.0) as u8;
+                data[i + 3] = 255; // Alpha channel
             }
 
-            // Update the cumulativeImageData with averaging the pixel
-            for i in 0..data.len() {
-                cumulative_data[i] += data[i] / self.settings.num_frames as u8;
-            }
-
-            console_log(&format!(
-                "Frame: {} ended with this state: {}",
-                frame, state
-            ));
+            let bar_length: f32 = 50.0;
+            let fraction: f32 = y as f32 / self.canvas.height() as f32;
+            let filled_length: usize = (bar_length * fraction) as usize;
+            let bar: String = format!(
+                "[{}{}] {:.2}%",
+                "#".repeat(filled_length),
+                "-".repeat(bar_length as usize - filled_length),
+                fraction * 100.0
+            );
+            console_log(&bar);
         }
 
-        let cumulative_image_data = ImageData::new_with_u8_clamped_array(
-            wasm_bindgen::Clamped(cumulative_data.as_slice()),
-            self.canvas.width(),
-        )?;
+        // Update cumulative_image_data
+        let mut cumulative_image_data = self.cumulative_image_data.data().to_vec();
+        for i in 0..data.len() {
+            cumulative_image_data[i] = cumulative_image_data[i].saturating_add(data[i] / self.settings.num_frames as u8);
+        }
+        self.cumulative_image_data = ImageData::new_with_u8_clamped_array(Clamped(&cumulative_image_data), self.canvas.width())?;
 
-        // Put the modified ImageData back to the canvas
-        context.put_image_data(&cumulative_image_data, 0.0, 0.0)?;
+        // Apply the frame data to the canvas
+        context.put_image_data(&self.cumulative_image_data, 0.0, 0.0)?;
 
-        Ok(cumulative_image_data)
+        Ok(())
     }
 
-    pub fn per_pixel(&self, x: f64, y: f64, state: u32) -> Vector {
+    fn per_pixel(&self, x: f64, y: f64, state: u32) -> Vector {
         // Initialize the accumlateColor Vector
         let mut accumulated_color = Vector { x: 0.0, y: 0.0, z: 0.0 };
 
@@ -710,7 +719,7 @@ impl Renderer {
         accumulated_color / self.settings.num_samples.into()
     }
 
-    pub fn trace_ray(&self, ray: &mut Ray, x: f64, y: f64, mut state: u32, depth: u32, mut ray_color: Vector) -> Vector {
+    fn trace_ray(&self, ray: &mut Ray, x: f64, y: f64, mut state: u32, depth: u32, mut ray_color: Vector) -> Vector {
         let num_pixels = self.canvas.width() * self.canvas.height();
         let pixel_index = (y * self.canvas.width() as f64 + x) as u32;
         state += num_pixels + pixel_index * 485732;
