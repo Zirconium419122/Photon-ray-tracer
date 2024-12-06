@@ -1,7 +1,12 @@
 extern crate console_error_panic_hook;
 
-use core::panic;
-use std::{cell::RefCell, ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign}, rc::Rc};
+mod random;
+mod vector;
+
+use random::Random;
+use vector::Vector;
+
+use std::{cell::RefCell, ops::Add, rc::Rc};
 
 use wasm_bindgen::{prelude::*, Clamped};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
@@ -21,211 +26,6 @@ extern "C" {
 
 pub fn console_log(s: &str) {
     log(s);
-}
-
-// Rust Vector struct
-#[wasm_bindgen]
-#[derive(Debug, Copy, Clone)]
-pub struct Vector {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
-}
-
-// Implementation of methods for the Vector struct
-#[wasm_bindgen]
-impl Vector {
-    #[wasm_bindgen(constructor)]
-    pub fn new(x: f64, y: f64, z: f64) -> Vector {
-        init_panic_hook();
-
-        Vector { x, y, z }
-    }
-
-    // Method to set a vector to specific values
-    pub fn set(&mut self, x: f64, y: f64, z: f64) {
-        self.x = x;
-        self.y = y;
-        self.z = z;
-    }
-
-    // Method to calculate the dot product with another vector
-    pub fn dot(&self, v: &Vector) -> f64 {
-        self.x * v.x + self.y * v.y + self.z * v.z
-    }
-
-    // Method to calculate the cross product with another vector
-    pub fn cross(&self, v: &Vector) -> Vector {
-        Vector {
-            x: self.y * v.z - self.z * v.y,
-            y: self.z * v.x - self.x * v.z,
-            z: self.x * v.y - self.y * v.x,
-        }
-    }
-
-    // Method to calculate the magnitude of the vector
-    pub fn magnitude(&self) -> f64 {
-        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
-    }
-
-    // Method to normalize the vector (make it a unit vector)
-    pub fn normalize(&self) -> Vector {
-        let mag = self.magnitude();
-        Vector {
-            x: self.x / mag,
-            y: self.y / mag,
-            z: self.z / mag,
-        }
-    }
-}
-
-// Method to add another vector
-impl Add for Vector {
-    type Output = Self;
-
-    fn add(self, v: Self) -> Self {
-        Self {
-            x: self.x + v.x,
-            y: self.y + v.y,
-            z: self.z + v.z,
-        }
-    }
-}
-
-// Method to add another vector and assign it
-impl AddAssign for Vector {
-    fn add_assign(&mut self, v: Self) {
-        *self = Self {
-            x: self.x + v.x,
-            y: self.y + v.y,
-            z: self.z + v.z,
-        }
-    }
-}
-
-// Method to subtract another vector
-impl Sub for Vector {
-    type Output = Self;
-
-    fn sub(self, v: Self) -> Self {
-        Self {
-            x: self.x - v.x,
-            y: self.y - v.y,
-            z: self.z - v.z,
-        }
-    }
-}
-
-// Method to subtract another vector and assign it
-impl SubAssign for Vector {
-    fn sub_assign(&mut self, v: Self) {
-        *self = Self {
-            x: self.x - v.x,
-            y: self.y - v.y,
-            z: self.z - v.z,
-        }
-    }
-}
-
-// Method to multiply with a scalar
-impl Mul<f64> for Vector {
-    type Output = Self;
-
-    fn mul(self, scalar: f64) -> Self {
-        Self {
-            x: self.x * scalar,
-            y: self.y * scalar,
-            z: self.z * scalar,
-        }
-    }
-}
-
-// Method to multiply with a Vector
-impl Mul for Vector {
-    type Output = Self;
-
-    fn mul(self, v: Self) -> Self {
-        Self {
-            x: self.x * v.x,
-            y: self.y * v.y,
-            z: self.z * v.z,
-        }
-    }
-}
-
-// Method to multiply another vector and assign it
-impl MulAssign for Vector {
-    fn mul_assign(&mut self, v: Self) {
-        *self = Self {
-            x: self.x * v.x,
-            y: self.y * v.y,
-            z: self.z * v.z,
-        }
-    }
-}
-
-// Method to divide by a scalar
-impl Div<f64> for Vector {
-    type Output = Self;
-
-    fn div(self, scalar: f64) -> Self {
-        // Check for division by zero to avoid errors
-        if scalar != 0.0 {
-            Self {
-                x: self.x / scalar,
-                y: self.y / scalar,
-                z: self.z / scalar,
-            }
-        } else {
-            // Handle division by zero gracefully
-            panic!("Division by zero!");
-        }
-    }
-}
-
-// Rust Random struct
-pub struct Random {
-    state: u32,
-}
-
-impl Random {
-    pub fn new(seed: u32) -> Random {
-        init_panic_hook();
-
-        Random { state: seed }
-    }
-
-    pub fn random_value(&mut self) -> f64 {
-        self.state = self.state.wrapping_mul(747796405).wrapping_add(2891336453);
-        let mut result = ((self.state >> ((self.state >> 28) + 4)) ^ self.state).wrapping_add(277803737);
-        result = (result >> 22) ^ result;
-        result as f64 / 4294967295.0
-    }
-
-    pub fn random_direction(&mut self) -> Vector {
-        for _ in 0..100 {
-            // Generate a random point in a cube
-            let x = self.random_value() * 2.0 - 1.0;
-            let y = self.random_value() * 2.0 - 1.0;
-            let z = self.random_value() * 2.0 - 1.0;
-
-            // Calculate the distance from the center of the cube
-            let point_in_cube = Vector { x, y, z };
-            let sqr_dst_from_center = point_in_cube.dot(&point_in_cube);
-
-            // If point is inside sphere, scale it to lie on the surface (otherwise, keep trying)
-            if sqr_dst_from_center <= 1.0 {
-                return point_in_cube / f64::sqrt(sqr_dst_from_center);
-            }
-        }
-
-        Vector { x: 0.0, y: 0.0, z: 0.0 }
-    }
-
-    pub fn random_hemisphere_direction(&mut self, normal: &Vector) -> Vector {
-        let direction = self.random_direction();
-        direction * normal.dot(&direction).signum()
-    }
 }
 
 // Rust Intersection struct
@@ -283,7 +83,7 @@ impl Intersections {
                 } else {
                     Some(IntersectionType::Cube)
                 }
-            },
+            }
             (Some(_), None) => Some(IntersectionType::Sphere),
             (None, Some(_)) => Some(IntersectionType::Cube),
             (None, None) => None,
@@ -356,12 +156,18 @@ impl Ray {
     pub fn get_background_color(&self) -> Vector {
         let t = 0.5 * (self.direction.y + 1.0);
 
-        let white = Vector { x: 1.0, y: 1.0, z: 1.0 };
-        let blue = Vector { x: 0.5, y: 0.7, z: 1.0 };
+        let white = Vector {
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+        };
+        let blue = Vector {
+            x: 0.5,
+            y: 0.7,
+            z: 1.0,
+        };
 
-        let gradient = white * (1.0 - t) + (blue * t);
-
-        gradient
+        white * (1.0 - t) + (blue * t)
     }
 }
 
@@ -401,8 +207,8 @@ impl Sphere {
             if t > 0.0 {
                 let intersection_point = ray.point_at_parameter(t);
                 return Some(Intersection {
-                    t: t,
-                    intersection_point: intersection_point,
+                    t,
+                    intersection_point,
                     intersection_object: *self,
                 });
             }
@@ -541,7 +347,7 @@ impl Settings {
 
 // Rust Scene struct
 #[wasm_bindgen]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Scene {
     spheres: Vec<Sphere>,
     cubes: Vec<Cube>,
@@ -582,17 +388,18 @@ pub struct Renderer {
 #[wasm_bindgen]
 impl Renderer {
     #[wasm_bindgen(constructor)]
-    pub fn new(canvas: HtmlCanvasElement, scene: Scene, settings: Settings) -> Result<Renderer, JsValue> {
+    pub fn new(
+        canvas: HtmlCanvasElement,
+        scene: Scene,
+        settings: Settings,
+    ) -> Result<Renderer, JsValue> {
         init_panic_hook();
 
         Ok(Renderer {
             canvas: canvas.clone(),
             scene,
             settings,
-            cumulative_image_data: ImageData::new_with_sw(
-                canvas.width(),
-                canvas.height()
-            )?,
+            cumulative_image_data: ImageData::new_with_sw(canvas.width(), canvas.height())?,
             current_frame: 0,
         })
     }
@@ -615,8 +422,7 @@ impl Renderer {
             }
         }));
 
-        window
-           .request_animation_frame(closure.as_ref().unchecked_ref())?;
+        window.request_animation_frame(closure.as_ref().unchecked_ref())?;
 
         closure.forget();
 
@@ -633,10 +439,7 @@ impl Renderer {
             .dyn_into::<CanvasRenderingContext2d>()?;
 
         // Create the new ImageData object for direct pixel manipulation
-        let image_data = ImageData::new_with_sw(
-            self.canvas.width(),
-            self.canvas.height(),
-        )?;
+        let image_data = ImageData::new_with_sw(self.canvas.width(), self.canvas.height())?;
 
         // Access the pixel data array
         let mut data = image_data.data();
@@ -647,7 +450,8 @@ impl Renderer {
         // Loop through each pixel on the canvas
         for y in 0..self.canvas.height() {
             for x in 0..self.canvas.width() {
-                state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676)) as u32 % max_state_value as u32;
+                state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676))
+                    % max_state_value as u32;
                 let color = self.per_pixel(x as f64, y as f64, state);
 
                 let i = ((y * self.canvas.width() + x) * 4) as usize;
@@ -672,9 +476,13 @@ impl Renderer {
         // Update cumulative_image_data
         let mut cumulative_image_data = self.cumulative_image_data.data().to_vec();
         for i in 0..data.len() {
-            cumulative_image_data[i] = cumulative_image_data[i].saturating_add(data[i] / self.settings.num_frames as u8);
+            cumulative_image_data[i] =
+                cumulative_image_data[i].saturating_add(data[i] / self.settings.num_frames as u8);
         }
-        self.cumulative_image_data = ImageData::new_with_u8_clamped_array(Clamped(&cumulative_image_data), self.canvas.width())?;
+        self.cumulative_image_data = ImageData::new_with_u8_clamped_array(
+            Clamped(&cumulative_image_data),
+            self.canvas.width(),
+        )?;
 
         // Apply the frame data to the canvas
         context.put_image_data(&self.cumulative_image_data, 0.0, 0.0)?;
@@ -684,7 +492,11 @@ impl Renderer {
 
     fn per_pixel(&self, x: f64, y: f64, state: u32) -> Vector {
         // Initialize the accumlateColor Vector
-        let mut accumulated_color = Vector { x: 0.0, y: 0.0, z: 0.0 };
+        let mut accumulated_color = Vector {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
 
         for sample in 0..self.settings.num_samples {
             // Calculate the jittered sample position within the pixel
@@ -710,7 +522,18 @@ impl Renderer {
             let mut ray = Ray::new(ray_origin, ray_direction);
 
             // Trace the ray to get the color
-            let color = self.trace_ray(&mut ray, sample_x, sample_y, state, 0, Vector { x: 1.0, y: 1.0, z: 1.0 });
+            let color = self.trace_ray(
+                &mut ray,
+                sample_x,
+                sample_y,
+                state,
+                0,
+                Vector {
+                    x: 1.0,
+                    y: 1.0,
+                    z: 1.0,
+                },
+            );
 
             // Accumulate the color
             accumulated_color += color;
@@ -719,16 +542,32 @@ impl Renderer {
         accumulated_color / self.settings.num_samples.into()
     }
 
-    fn trace_ray(&self, ray: &mut Ray, x: f64, y: f64, mut state: u32, depth: u32, mut ray_color: Vector) -> Vector {
+    fn trace_ray(
+        &self,
+        ray: &mut Ray,
+        x: f64,
+        y: f64,
+        mut state: u32,
+        depth: u32,
+        mut ray_color: Vector,
+    ) -> Vector {
         let num_pixels = self.canvas.width() * self.canvas.height();
         let pixel_index = (y * self.canvas.width() as f64 + x) as u32;
         state += num_pixels + pixel_index * 485732;
 
         if depth > self.settings.max_reflection_depth {
-            return Vector { x: 0.0, y: 0.0, z: 0.0 };
+            return Vector {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            };
         }
 
-        let mut incoming_light = Vector { x: 0.0, y: 0.0, z: 0.0 };
+        let mut incoming_light = Vector {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
 
         let mut random = Random::new(state);
 
@@ -736,7 +575,7 @@ impl Renderer {
         let mut closest_intersection_cube: Option<Intersection<Cube>> = None;
 
         for sphere in &self.scene.spheres {
-            if let Some(intersection_result) = sphere.intersect(&ray) {
+            if let Some(intersection_result) = sphere.intersect(ray) {
                 if closest_intersection_sphere.is_none()
                     || intersection_result.t < closest_intersection_sphere.unwrap().t
                 {
@@ -746,7 +585,7 @@ impl Renderer {
         }
 
         for cube in &self.scene.cubes {
-            if let Some(intersection_result) = cube.intersect(&ray) {
+            if let Some(intersection_result) = cube.intersect(ray) {
                 if closest_intersection_cube.is_none()
                     || intersection_result.t < closest_intersection_cube.unwrap().t
                 {
@@ -755,7 +594,8 @@ impl Renderer {
             }
         }
 
-        let mut closest_intersections = Intersections::new(closest_intersection_sphere, closest_intersection_cube);
+        let mut closest_intersections =
+            Intersections::new(closest_intersection_sphere, closest_intersection_cube);
         closest_intersections.determine_closer();
 
         match closest_intersections.get_closer_intersection() {
@@ -780,7 +620,7 @@ impl Renderer {
                 if sphere.material.emission_power > 0.0 {
                     return incoming_light;
                 }
-            },
+            }
             IntersectionObject::Cube(intersection_cube) => {
                 let cube_intersection_point = intersection_cube.unwrap().intersection_point;
                 let cube = intersection_cube.unwrap().intersection_object;
@@ -802,13 +642,13 @@ impl Renderer {
                 if cube.material.emission_power > 0.0 {
                     return incoming_light;
                 }
-            },
+            }
             IntersectionObject::None => {
                 let background_color = ray.get_background_color();
                 return ray_color * background_color;
-            },
+            }
         };
 
-        return self.trace_ray(ray, x, y, state, depth + 1, ray_color);
+        self.trace_ray(ray, x, y, state, depth + 1, ray_color)
     }
 }
