@@ -381,7 +381,7 @@ pub struct Renderer {
     canvas: HtmlCanvasElement,
     scene: Scene,
     settings: Settings,
-    cumulative_image_data: ImageData,
+    cumulative_image_data: Vec<u32>,
     current_frame: u32,
 }
 
@@ -399,7 +399,7 @@ impl Renderer {
             canvas: canvas.clone(),
             scene,
             settings,
-            cumulative_image_data: ImageData::new_with_sw(canvas.width(), canvas.height())?,
+            cumulative_image_data: vec![0; canvas.width() as usize * canvas.height() as usize * 4],
             current_frame: 0,
         })
     }
@@ -474,18 +474,25 @@ impl Renderer {
         }
 
         // Update cumulative_image_data
-        let mut cumulative_image_data = self.cumulative_image_data.data().to_vec();
         for i in 0..data.len() {
-            cumulative_image_data[i] =
-                cumulative_image_data[i].saturating_add(data[i] / self.settings.num_frames as u8);
+            self.cumulative_image_data[i] =
+                self.cumulative_image_data[i].saturating_add(data[i] as u32);
         }
-        self.cumulative_image_data = ImageData::new_with_u8_clamped_array(
-            Clamped(&cumulative_image_data),
+
+        let averaged_image_data = ImageData::new_with_u8_clamped_array(
+            Clamped(
+                &(self
+                    .cumulative_image_data
+                    .iter()
+                    .map(|x| x / (self.current_frame + 1))
+                    .map(|x| x as u8)
+                    .collect::<Vec<u8>>()),
+            ),
             self.canvas.width(),
         )?;
 
         // Apply the frame data to the canvas
-        context.put_image_data(&self.cumulative_image_data, 0.0, 0.0)?;
+        context.put_image_data(&averaged_image_data, 0.0, 0.0)?;
 
         Ok(())
     }
