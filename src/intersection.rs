@@ -1,4 +1,4 @@
-use crate::{init_panic_hook, vector::Vector, Cube, Sphere};
+use crate::{cube::Cube, init_panic_hook, sphere::Sphere, vector::Vector};
 
 // Rust Intersection struct
 #[derive(Debug, Copy, Clone)]

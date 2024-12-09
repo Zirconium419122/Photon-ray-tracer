@@ -4,7 +4,7 @@ use wasm_bindgen::prelude::*;
 
 // Rust Vector struct
 #[wasm_bindgen]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct Vector {
     pub x: f64,
     pub y: f64,

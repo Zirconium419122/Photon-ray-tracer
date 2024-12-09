@@ -1,16 +1,23 @@
 extern crate console_error_panic_hook;
 
+mod cube;
 mod intersection;
+mod material;
 mod random;
+mod ray;
+mod sphere;
 mod vector;
 
 use crate::{
+    cube::Cube,
     intersection::{Intersection, IntersectionObject, Intersections},
     random::Random,
+    ray::Ray,
+    sphere::Sphere,
     vector::Vector,
 };
 
-use std::{cell::RefCell, ops::Add, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use wasm_bindgen::{prelude::*, Clamped};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
@@ -30,230 +37,6 @@ extern "C" {
 
 pub fn console_log(s: &str) {
     log(s);
-}
-
-// Rust Material struct
-#[wasm_bindgen]
-#[derive(Debug, Copy, Clone)]
-#[allow(dead_code)]
-pub struct Material {
-    color: Vector,  // RGB color/albedo of the material
-    roughness: f64, // Reflection coefficient between 0 and 1, roughness zero means no reflections
-    emission_color: Vector,
-    emission_power: f64,
-    // metallic: f64,       // Defines the splecularness of the Material
-}
-
-#[wasm_bindgen]
-impl Material {
-    #[wasm_bindgen(constructor)]
-    pub fn new(
-        color: Vector,
-        roughness: f64,
-        emission_color: Vector,
-        emission_power: f64,
-    ) -> Material {
-        init_panic_hook();
-
-        Material {
-            color,
-            roughness,
-            emission_color,
-            emission_power,
-        }
-    }
-}
-
-// Rust Ray struct
-#[wasm_bindgen]
-#[derive(Debug, Copy, Clone)]
-pub struct Ray {
-    origin: Vector,
-    direction: Vector,
-}
-
-#[wasm_bindgen]
-impl Ray {
-    #[wasm_bindgen(constructor)]
-    pub fn new(origin: Vector, direction: Vector) -> Ray {
-        init_panic_hook();
-
-        Ray { origin, direction }
-    }
-
-    pub fn point_at_parameter(&self, t: f64) -> Vector {
-        self.origin.add(self.direction * t)
-    }
-
-    pub fn get_background_color(&self) -> Vector {
-        let t = 0.5 * (self.direction.y + 1.0);
-
-        let white = Vector {
-            x: 1.0,
-            y: 1.0,
-            z: 1.0,
-        };
-        let blue = Vector {
-            x: 0.5,
-            y: 0.7,
-            z: 1.0,
-        };
-
-        white * (1.0 - t) + (blue * t)
-    }
-}
-
-// Rust Sphere struct
-#[wasm_bindgen]
-#[derive(Debug, Copy, Clone)]
-pub struct Sphere {
-    center: Vector,
-    radius: f64,
-    material: Material,
-}
-
-#[wasm_bindgen]
-impl Sphere {
-    #[wasm_bindgen(constructor)]
-    pub fn new(center: Vector, radius: f64, material: Material) -> Sphere {
-        init_panic_hook();
-
-        Sphere {
-            center,
-            radius,
-            material,
-        }
-    }
-
-    fn intersect(&self, ray: &Ray) -> Option<Intersection<Sphere>> {
-        let oc = ray.origin - self.center;
-        let a = ray.direction.dot(&ray.direction);
-        let b = oc.dot(&ray.direction) * 2.0;
-        let c = oc.dot(&oc) - self.radius * self.radius;
-        let discriminant = b * b - 4.0 * a * c;
-
-        if discriminant >= 0.0 {
-            // Ray intersects the sphere, calculate intersection point
-            let t = (-b - discriminant.sqrt()) / (2.0 * a);
-
-            if t > 0.0 {
-                let intersection_point = ray.point_at_parameter(t);
-                return Some(Intersection {
-                    t,
-                    intersection_point,
-                    intersection_object: *self,
-                });
-            }
-        }
-
-        // Ray does not intersect the sphere
-        None
-    }
-
-    fn calculate_normal(&self, point: &Vector) -> Vector {
-        (*point - self.center).normalize()
-    }
-}
-
-// Rust Cube struct
-#[wasm_bindgen]
-#[derive(Debug, Copy, Clone)]
-pub struct Cube {
-    center: Vector,
-    size: Vector,
-    material: Material,
-}
-
-#[wasm_bindgen]
-impl Cube {
-    #[wasm_bindgen(constructor)]
-    pub fn new(center: Vector, size: Vector, material: Material) -> Cube {
-        init_panic_hook();
-
-        Cube {
-            center,
-            size,
-            material,
-        }
-    }
-
-    fn intersect(&self, ray: &Ray) -> Option<Intersection<Cube>> {
-        let half_size = self.size / 2.0;
-
-        // Calculate the minimum and maximum extents along each axis
-        let min_bound = self.center - half_size;
-        let max_bound = self.center + half_size;
-
-        let inv_direction = Vector {
-            x: 1.0 / ray.direction.x,
-            y: 1.0 / ray.direction.y,
-            z: 1.0 / ray.direction.z,
-        };
-
-        // Calculate the intersection distances along each axis
-        let t1 = (min_bound.x - ray.origin.x) * inv_direction.x;
-        let t2 = (max_bound.x - ray.origin.x) * inv_direction.x;
-
-        let t_min = t1.min(t2);
-        let t_max = t1.max(t2);
-
-        let t3 = (min_bound.y - ray.origin.y) * inv_direction.y;
-        let t4 = (max_bound.y - ray.origin.y) * inv_direction.y;
-
-        let t_min = t3.min(t4).max(t_min);
-        let t_max = t3.max(t4).min(t_max);
-
-        let t5 = (min_bound.z - ray.origin.z) * inv_direction.z;
-        let t6 = (max_bound.z - ray.origin.z) * inv_direction.z;
-
-        let t_min = t5.min(t6).max(t_min);
-        let t_max = t5.max(t6).min(t_max);
-
-        // Check if there is a valid intersection
-        if t_min <= t_max && t_min >= 0.0 {
-            // Return the intersection point at the minmum distance
-            let intersection_point = ray.point_at_parameter(t_min);
-            return Some(Intersection {
-                t: t_min,
-                intersection_point,
-                intersection_object: *self,
-            });
-        }
-
-        // Ray does not intersect with the cube
-        None
-    }
-
-    fn calculate_normal(&self, point: &Vector) -> Vector {
-        // Calculate the differences between the point's coordinates and the cube's center
-        let dx = point.x - self.center.x;
-        let dy = point.y - self.center.y;
-        let dz = point.z - self.center.z;
-
-        // Identify the face closest to the point and assign the normal accordingly
-        if dx.abs() > dy.abs() && dx.abs() > dz.abs() {
-            // Point is on the face with the largest x-coordinate differance
-            Vector {
-                x: dx.signum(),
-                y: 0.0,
-                z: 0.0,
-            }
-        } else if dy.abs() > dz.abs() {
-            // Point is on the face with the largest y-coordinate differance
-            Vector {
-                x: 0.0,
-                y: dy.signum(),
-                z: 0.0,
-            }
-        } else {
-            // Point is on the face with the largest z-coordinate differance
-            Vector {
-                x: 0.0,
-                y: 0.0,
-                z: dz.signum(),
-            }
-        }
-    }
 }
 
 // Rust Settings struct
@@ -377,13 +160,13 @@ impl Renderer {
         let mut data = image_data.data();
 
         let mut state;
-        let max_state_value = 1e9;
+        let max_state_value = 1_000_000_000;
 
         // Loop through each pixel on the canvas
         for y in 0..self.canvas.height() {
             for x in 0..self.canvas.width() {
-                state = ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676))
-                    % max_state_value as u32;
+                state =
+                    ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676)) % max_state_value;
                 let color = self.per_pixel(x as f64, y as f64, state);
 
                 let i = ((y * self.canvas.width() + x) * 4) as usize;
@@ -431,11 +214,7 @@ impl Renderer {
 
     fn per_pixel(&self, x: f64, y: f64, state: u32) -> Vector {
         // Initialize the accumlateColor Vector
-        let mut accumulated_color = Vector {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        };
+        let mut accumulated_color = Vector::default();
 
         for sample in 0..self.settings.num_samples {
             // Calculate the jittered sample position within the pixel
@@ -495,18 +274,10 @@ impl Renderer {
         state += num_pixels + pixel_index * 485732;
 
         if depth > self.settings.max_reflection_depth {
-            return Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            };
+            return Vector::default();
         }
 
-        let mut incoming_light = Vector {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        };
+        let mut incoming_light = Vector::default();
 
         let mut random = Random::new(state);
 

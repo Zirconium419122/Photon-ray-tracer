@@ -37,11 +37,7 @@ impl Random {
             }
         }
 
-        Vector {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        }
+        Vector::default()
     }
 
     pub fn random_hemisphere_direction(&mut self, normal: &Vector) -> Vector {
