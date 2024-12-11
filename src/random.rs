@@ -1,6 +1,7 @@
 use crate::{init_panic_hook, vector::Vector};
 
 // Rust Random struct
+#[derive(Debug, Copy, Clone)]
 pub struct Random {
     state: u32,
 }

@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    init_panic_hook, intersection::Intersection, material::Material, ray::Ray, vector::Vector,
+    init_panic_hook, intersection::{Intersect, Intersection}, material::Material, ray::Ray, vector::Vector,
 };
 
 // Rust Cube struct
@@ -13,20 +13,8 @@ pub struct Cube {
     pub material: Material,
 }
 
-#[wasm_bindgen]
-impl Cube {
-    #[wasm_bindgen(constructor)]
-    pub fn new(center: Vector, size: Vector, material: Material) -> Cube {
-        init_panic_hook();
-
-        Cube {
-            center,
-            size,
-            material,
-        }
-    }
-
-    pub(crate) fn intersect(&self, ray: &Ray) -> Option<Intersection<Cube>> {
+impl Intersect<Cube> for Cube {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection<Cube>> {
         let half_size = self.size / 2.0;
 
         // Calculate the minimum and maximum extents along each axis
@@ -73,7 +61,7 @@ impl Cube {
         None
     }
 
-    pub(crate) fn calculate_normal(&self, point: &Vector) -> Vector {
+    fn calculate_normal(&self, point: &Vector) -> Vector {
         // Calculate the differences between the point's coordinates and the cube's center
         let dx = point.x - self.center.x;
         let dy = point.y - self.center.y;
@@ -101,6 +89,20 @@ impl Cube {
                 y: 0.0,
                 z: dz.signum(),
             }
+        }
+    }
+}
+
+#[wasm_bindgen]
+impl Cube {
+    #[wasm_bindgen(constructor)]
+    pub fn new(center: Vector, size: Vector, material: Material) -> Cube {
+        init_panic_hook();
+
+        Cube {
+            center,
+            size,
+            material,
         }
     }
 }

@@ -19,6 +19,7 @@ use crate::{
 
 use std::{cell::RefCell, rc::Rc};
 
+use intersection::Intersect;
 use wasm_bindgen::{prelude::*, Clamped};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
 
@@ -98,6 +99,7 @@ pub struct Renderer {
     settings: Settings,
     cumulative_image_data: Vec<u32>,
     current_frame: u32,
+    random: Random,
 }
 
 #[wasm_bindgen]
@@ -116,6 +118,7 @@ impl Renderer {
             settings,
             cumulative_image_data: vec![0; canvas.width() as usize * canvas.height() as usize * 4],
             current_frame: 0,
+            random: Random::new(367380976),
         })
     }
 
@@ -159,15 +162,10 @@ impl Renderer {
         // Access the pixel data array
         let mut data = image_data.data();
 
-        let mut state;
-        let max_state_value = 1_000_000_000;
-
         // Loop through each pixel on the canvas
         for y in 0..self.canvas.height() {
             for x in 0..self.canvas.width() {
-                state =
-                    ((x + 349279) * (x * 213574) * (y + 784674) * (y * 426676)) % max_state_value;
-                let color = self.per_pixel(x as f64, y as f64, state);
+                let color = self.per_pixel(x as f64, y as f64);
 
                 let i = ((y * self.canvas.width() + x) * 4) as usize;
                 data[i] = (color.x * 255.0) as u8;
@@ -212,7 +210,7 @@ impl Renderer {
         Ok(())
     }
 
-    fn per_pixel(&self, x: f64, y: f64, state: u32) -> Vector {
+    fn per_pixel(&mut self, x: f64, y: f64) -> Vector {
         // Initialize the accumlateColor Vector
         let mut accumulated_color = Vector::default();
 
@@ -244,7 +242,6 @@ impl Renderer {
                 &mut ray,
                 sample_x,
                 sample_y,
-                state,
                 0,
                 Vector {
                     x: 1.0,
@@ -257,29 +254,24 @@ impl Renderer {
             accumulated_color += color;
         }
 
-        accumulated_color / self.settings.num_samples.into()
+        accumulated_color / self.settings.num_samples as f64
     }
 
     fn trace_ray(
-        &self,
+        &mut self,
         ray: &mut Ray,
         x: f64,
         y: f64,
-        mut state: u32,
         depth: u32,
         mut ray_color: Vector,
     ) -> Vector {
-        let num_pixels = self.canvas.width() * self.canvas.height();
-        let pixel_index = (y * self.canvas.width() as f64 + x) as u32;
-        state += num_pixels + pixel_index * 485732;
-
         if depth > self.settings.max_reflection_depth {
             return Vector::default();
         }
 
         let mut incoming_light = Vector::default();
 
-        let mut random = Random::new(state);
+        let random = &mut self.random;
 
         let mut closest_intersection_sphere: Option<Intersection<Sphere>> = None;
         let mut closest_intersection_cube: Option<Intersection<Cube>> = None;
@@ -310,8 +302,8 @@ impl Renderer {
 
         match closest_intersections.get_closer_intersection() {
             IntersectionObject::Sphere(intersection_sphere) => {
-                let sphere_intersection_point = intersection_sphere.unwrap().intersection_point;
-                let sphere = intersection_sphere.unwrap().intersection_object;
+                let sphere_intersection_point = intersection_sphere.intersection_point;
+                let sphere = intersection_sphere.intersection_object;
 
                 // Get the normal on the Sphere
                 let normal = sphere.calculate_normal(&sphere_intersection_point);
@@ -332,8 +324,8 @@ impl Renderer {
                 }
             }
             IntersectionObject::Cube(intersection_cube) => {
-                let cube_intersection_point = intersection_cube.unwrap().intersection_point;
-                let cube = intersection_cube.unwrap().intersection_object;
+                let cube_intersection_point = intersection_cube.intersection_point;
+                let cube = intersection_cube.intersection_object;
 
                 // Get the normal on the Cube
                 let normal = cube.calculate_normal(&cube_intersection_point);
@@ -359,6 +351,6 @@ impl Renderer {
             }
         };
 
-        self.trace_ray(ray, x, y, state, depth + 1, ray_color)
+        self.trace_ray(ray, x, y, depth + 1, ray_color)
     }
 }

@@ -18,7 +18,7 @@ async function run() {
 	// Define the settigns of the renderer
 	const maxReflectionDepth = 10;
 	const numSamples = 5;
-	const numFrames = 100;
+	const numFrames = 10;
 	const settings = new wasm.Settings(maxReflectionDepth, numSamples, numFrames);
 
 	// Create the scene

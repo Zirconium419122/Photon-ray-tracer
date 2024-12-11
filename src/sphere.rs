@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    init_panic_hook, intersection::Intersection, material::Material, ray::Ray, vector::Vector,
+    init_panic_hook, intersection::{Intersect, Intersection}, material::Material, ray::Ray, vector::Vector,
 };
 
 // Rust Sphere struct
@@ -13,20 +13,8 @@ pub struct Sphere {
     pub material: Material,
 }
 
-#[wasm_bindgen]
-impl Sphere {
-    #[wasm_bindgen(constructor)]
-    pub fn new(center: Vector, radius: f64, material: Material) -> Sphere {
-        init_panic_hook();
-
-        Sphere {
-            center,
-            radius,
-            material,
-        }
-    }
-
-    pub(crate) fn intersect(&self, ray: &Ray) -> Option<Intersection<Sphere>> {
+impl Intersect<Sphere> for Sphere {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection<Sphere>> {
         let oc = ray.origin - self.center;
         let a = ray.direction.dot(&ray.direction);
         let b = oc.dot(&ray.direction) * 2.0;
@@ -51,7 +39,21 @@ impl Sphere {
         None
     }
 
-    pub(crate) fn calculate_normal(&self, point: &Vector) -> Vector {
+    fn calculate_normal(&self, point: &Vector) -> Vector {
         (*point - self.center).normalize()
+    }
+}
+
+#[wasm_bindgen]
+impl Sphere {
+    #[wasm_bindgen(constructor)]
+    pub fn new(center: Vector, radius: f64, material: Material) -> Sphere {
+        init_panic_hook();
+
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 }

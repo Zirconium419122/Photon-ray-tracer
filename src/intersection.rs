@@ -1,4 +1,9 @@
-use crate::{cube::Cube, init_panic_hook, sphere::Sphere, vector::Vector};
+use crate::{cube::Cube, init_panic_hook, ray::Ray, sphere::Sphere, vector::Vector};
+
+pub(crate) trait Intersect<T> {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection<T>>;
+    fn calculate_normal(&self, point: &Vector) -> Vector;
+}
 
 // Rust Intersection struct
 #[derive(Debug, Copy, Clone)]
@@ -18,8 +23,8 @@ pub enum IntersectionType {
 // Rust IntersectionObject enum
 #[derive(Debug, Copy, Clone)]
 pub enum IntersectionObject {
-    Sphere(Option<Intersection<Sphere>>),
-    Cube(Option<Intersection<Cube>>),
+    Sphere(Intersection<Sphere>),
+    Cube(Intersection<Cube>),
     None,
 }
 
@@ -65,8 +70,8 @@ impl Intersections {
     // Method / Function to get the closer intersection
     pub fn get_closer_intersection(&self) -> IntersectionObject {
         match self.closer_type {
-            Some(IntersectionType::Sphere) => IntersectionObject::Sphere(self.sphere_intersection),
-            Some(IntersectionType::Cube) => IntersectionObject::Cube(self.cube_intersection),
+            Some(IntersectionType::Sphere) => IntersectionObject::Sphere(self.sphere_intersection.unwrap()),
+            Some(IntersectionType::Cube) => IntersectionObject::Cube(self.cube_intersection.unwrap()),
             None => IntersectionObject::None,
         }
     }
