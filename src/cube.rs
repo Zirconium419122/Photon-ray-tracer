@@ -1,7 +1,11 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    init_panic_hook, intersection::{Intersect, Intersection}, material::Material, ray::Ray, vector::Vector,
+    init_panic_hook,
+    intersection::{Intersectable, Intersection},
+    material::Material,
+    ray::Ray,
+    vector::Vector,
 };
 
 // Rust Cube struct
@@ -13,8 +17,8 @@ pub struct Cube {
     pub material: Material,
 }
 
-impl Intersect<Cube> for Cube {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection<Cube>> {
+impl Intersectable for Cube {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let half_size = self.size / 2.0;
 
         // Calculate the minimum and maximum extents along each axis
@@ -53,7 +57,7 @@ impl Intersect<Cube> for Cube {
             return Some(Intersection {
                 t: t_min,
                 intersection_point,
-                intersection_object: *self,
+                intersection_object: Box::new(*self),
             });
         }
 
@@ -90,6 +94,10 @@ impl Intersect<Cube> for Cube {
                 z: dz.signum(),
             }
         }
+    }
+
+    fn get_material(&self) -> &Material {
+        &self.material
     }
 }
 

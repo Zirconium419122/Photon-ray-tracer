@@ -10,7 +10,7 @@ mod vector;
 
 use crate::{
     cube::Cube,
-    intersection::{Intersection, IntersectionObject, Intersections},
+    intersection::{Intersectable, Intersection},
     random::Random,
     ray::Ray,
     sphere::Sphere,
@@ -19,7 +19,6 @@ use crate::{
 
 use std::{cell::RefCell, rc::Rc};
 
-use intersection::Intersect;
 use wasm_bindgen::{prelude::*, Clamped};
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, ImageData};
 
@@ -240,9 +239,7 @@ impl Renderer {
             // Trace the ray to get the color
             let color = self.trace_ray(
                 &mut ray,
-                sample_x,
-                sample_y,
-                0,
+                self.settings.max_reflection_depth,
                 Vector {
                     x: 1.0,
                     y: 1.0,
@@ -257,15 +254,8 @@ impl Renderer {
         accumulated_color / self.settings.num_samples as f64
     }
 
-    fn trace_ray(
-        &mut self,
-        ray: &mut Ray,
-        x: f64,
-        y: f64,
-        depth: u32,
-        mut ray_color: Vector,
-    ) -> Vector {
-        if depth > self.settings.max_reflection_depth {
+    fn trace_ray(&mut self, ray: &mut Ray, depth: u32, mut ray_color: Vector) -> Vector {
+        if depth <= 0 {
             return Vector::default();
         }
 
@@ -273,84 +263,119 @@ impl Renderer {
 
         let random = &mut self.random;
 
-        let mut closest_intersection_sphere: Option<Intersection<Sphere>> = None;
-        let mut closest_intersection_cube: Option<Intersection<Cube>> = None;
+        let mut closest_intersection: Option<Intersection> = None;
 
         for sphere in &self.scene.spheres {
             if let Some(intersection_result) = sphere.intersect(ray) {
-                if closest_intersection_sphere.is_none()
-                    || intersection_result.t < closest_intersection_sphere.unwrap().t
+                if closest_intersection.is_none() {
+                    closest_intersection = Some(intersection_result);
+                } else if intersection_result.t
+                    < unsafe { &closest_intersection.clone().unwrap_unchecked().t }
                 {
-                    closest_intersection_sphere = Some(intersection_result);
+                    closest_intersection = Some(intersection_result);
                 }
             }
         }
 
         for cube in &self.scene.cubes {
             if let Some(intersection_result) = cube.intersect(ray) {
-                if closest_intersection_cube.is_none()
-                    || intersection_result.t < closest_intersection_cube.unwrap().t
+                if closest_intersection.is_none() {
+                    closest_intersection = Some(intersection_result);
+                } else if intersection_result.t
+                    < unsafe { closest_intersection.clone().unwrap_unchecked().t }
                 {
-                    closest_intersection_cube = Some(intersection_result);
+                    closest_intersection = Some(intersection_result);
                 }
             }
         }
 
-        let mut closest_intersections =
-            Intersections::new(closest_intersection_sphere, closest_intersection_cube);
-        closest_intersections.determine_closer();
-
-        match closest_intersections.get_closer_intersection() {
-            IntersectionObject::Sphere(intersection_sphere) => {
-                let sphere_intersection_point = intersection_sphere.intersection_point;
-                let sphere = intersection_sphere.intersection_object;
+        match closest_intersection {
+            Some(intersection) => {
+                let intersection_point = intersection.intersection_point;
 
                 // Get the normal on the Sphere
-                let normal = sphere.calculate_normal(&sphere_intersection_point);
+                let normal = intersection
+                    .intersection_object
+                    .calculate_normal(&intersection_point);
 
                 // Update the origin and direction of the ray for the next iteration
-                ray.origin = sphere_intersection_point;
+                ray.origin = intersection_point;
                 ray.direction = random.random_hemisphere_direction(&normal);
 
                 // Calculate the incoming light
-                let emitted_light = sphere.material.emission_color * sphere.material.emission_power;
+                let emission_color = intersection
+                    .intersection_object
+                    .get_material()
+                    .emission_color;
+                let emission_power = intersection
+                    .intersection_object
+                    .get_material()
+                    .emission_power;
+                let emitted_light = emission_color * emission_power;
                 let emission = emitted_light * ray_color;
                 incoming_light += emission;
 
-                ray_color *= sphere.material.color;
+                ray_color *= intersection.intersection_object.get_material().color;
 
-                if sphere.material.emission_power > 0.0 {
+                if intersection
+                    .intersection_object
+                    .get_material()
+                    .emission_power
+                    > 0.0
+                {
                     return incoming_light;
                 }
             }
-            IntersectionObject::Cube(intersection_cube) => {
-                let cube_intersection_point = intersection_cube.intersection_point;
-                let cube = intersection_cube.intersection_object;
+            // IntersectionObject::Sphere(intersection_sphere) => {
+            //     let sphere_intersection_point = intersection_sphere.intersection_point;
+            //     let sphere = intersection_sphere.intersection_object;
 
-                // Get the normal on the Cube
-                let normal = cube.calculate_normal(&cube_intersection_point);
+            //     // Get the normal on the Sphere
+            //     let normal = sphere.calculate_normal(&sphere_intersection_point);
 
-                // Update the origin and direction of the ray for the next iteration
-                ray.origin = cube_intersection_point;
-                ray.direction = random.random_hemisphere_direction(&normal);
+            //     // Update the origin and direction of the ray for the next iteration
+            //     ray.origin = sphere_intersection_point;
+            //     ray.direction = random.random_hemisphere_direction(&normal);
 
-                // Calculate the incoming light
-                let emitted_light = cube.material.emission_color * cube.material.emission_power;
-                let emission = emitted_light * ray_color;
-                incoming_light += emission;
+            //     // Calculate the incoming light
+            //     let emitted_light = sphere.get_material().emission_color * sphere.get_material().emission_power;
+            //     let emission = emitted_light * ray_color;
+            //     incoming_light += emission;
 
-                ray_color *= cube.material.color;
+            //     ray_color *= sphere.get_material().color;
 
-                if cube.material.emission_power > 0.0 {
-                    return incoming_light;
-                }
-            }
-            IntersectionObject::None => {
+            //     if sphere.get_material().emission_power > 0.0 {
+            //         return incoming_light;
+            //     }
+            // }
+            // IntersectionObject::Cube(intersection_cube) => {
+            //     let cube_intersection_point = intersection_cube.intersection_point;
+            //     let cube = intersection_cube.intersection_object;
+
+            //     // Get the normal on the Cube
+            //     let normal = cube.calculate_normal(&cube_intersection_point);
+
+            //     // Update the origin and direction of the ray for the next iteration
+            //     ray.origin = cube_intersection_point;
+            //     ray.direction = random.random_hemisphere_direction(&normal);
+
+            //     // Calculate the incoming light
+            //     let emitted_light = cube.get_material().emission_color * cube.get_material().emission_power;
+            //     let emission = emitted_light * ray_color;
+            //     incoming_light += emission;
+
+            //     ray_color *= cube.get_material().color;
+
+            //     if cube.get_material().emission_power > 0.0 {
+            //         return incoming_light;
+            //     }
+            // }
+            None => {
                 let background_color = ray.get_background_color();
                 return ray_color * background_color;
             }
         };
 
-        self.trace_ray(ray, x, y, depth + 1, ray_color)
+        self.trace_ray(ray, depth + 1, ray_color)
     }
 }

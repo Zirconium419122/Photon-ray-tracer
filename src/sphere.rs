@@ -1,7 +1,11 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    init_panic_hook, intersection::{Intersect, Intersection}, material::Material, ray::Ray, vector::Vector,
+    init_panic_hook,
+    intersection::{Intersectable, Intersection},
+    material::Material,
+    ray::Ray,
+    vector::Vector,
 };
 
 // Rust Sphere struct
@@ -13,8 +17,8 @@ pub struct Sphere {
     pub material: Material,
 }
 
-impl Intersect<Sphere> for Sphere {
-    fn intersect(&self, ray: &Ray) -> Option<Intersection<Sphere>> {
+impl Intersectable for Sphere {
+    fn intersect(&self, ray: &Ray) -> Option<Intersection> {
         let oc = ray.origin - self.center;
         let a = ray.direction.dot(&ray.direction);
         let b = oc.dot(&ray.direction) * 2.0;
@@ -30,7 +34,7 @@ impl Intersect<Sphere> for Sphere {
                 return Some(Intersection {
                     t,
                     intersection_point,
-                    intersection_object: *self,
+                    intersection_object: Box::new(*self),
                 });
             }
         }
@@ -41,6 +45,10 @@ impl Intersect<Sphere> for Sphere {
 
     fn calculate_normal(&self, point: &Vector) -> Vector {
         (*point - self.center).normalize()
+    }
+
+    fn get_material(&self) -> &Material {
+        &self.material
     }
 }
 
