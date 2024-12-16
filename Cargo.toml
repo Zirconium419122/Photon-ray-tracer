@@ -5,7 +5,7 @@ edition = "2021"
 
 description = "A raytracer writen in Rust and TypeScript"
 repository = "https://github.com/Zirconium419122/Photon-ray-tracer/"
-licence = "MIT"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -128,17 +128,16 @@ impl Renderer {
     }
 
     fn render_next_frame(self_rc: Rc<RefCell<Renderer>>) -> Result<(), JsValue> {
-        let window = web_sys::window().unwrap();
-        let self_clone = self_rc.clone();
         let closure: Closure<dyn FnMut()> = Closure::wrap(Box::new(move || {
-            let mut renderer = self_clone.borrow_mut();
+            let mut renderer = self_rc.borrow_mut();
             if renderer.current_frame < renderer.settings.num_frames {
                 renderer.render_frame().unwrap();
                 renderer.current_frame += 1;
-                Renderer::render_next_frame(self_clone.clone()).unwrap();
+                Renderer::render_next_frame(self_rc.clone()).unwrap();
             }
         }));
 
+        let window = web_sys::window().unwrap();
         window.request_animation_frame(closure.as_ref().unchecked_ref())?;
 
         closure.forget();
@@ -263,16 +262,16 @@ impl Renderer {
 
         let random = &mut self.random;
 
-        let mut closest_intersection: Option<Intersection> = None;
+        let mut closest_intersection: Option<Rc<Intersection>> = None;
 
         for sphere in &self.scene.spheres {
             if let Some(intersection_result) = sphere.intersect(ray) {
                 if closest_intersection.is_none() {
-                    closest_intersection = Some(intersection_result);
+                    closest_intersection = Some(intersection_result.into());
                 } else if intersection_result.t
-                    < unsafe { &closest_intersection.clone().unwrap_unchecked().t }
+                    < closest_intersection.as_ref().map_or(f64::INFINITY, |x| x.t)
                 {
-                    closest_intersection = Some(intersection_result);
+                    closest_intersection = Some(intersection_result.into());
                 }
             }
         }
@@ -280,11 +279,11 @@ impl Renderer {
         for cube in &self.scene.cubes {
             if let Some(intersection_result) = cube.intersect(ray) {
                 if closest_intersection.is_none() {
-                    closest_intersection = Some(intersection_result);
+                    closest_intersection = Some(intersection_result.into());
                 } else if intersection_result.t
-                    < unsafe { closest_intersection.clone().unwrap_unchecked().t }
+                    < closest_intersection.as_ref().map_or(f64::INFINITY, |x| x.t)
                 {
-                    closest_intersection = Some(intersection_result);
+                    closest_intersection = Some(intersection_result.into());
                 }
             }
         }
