@@ -299,7 +299,11 @@ impl Renderer {
 
                 // Update the origin and direction of the ray for the next iteration
                 ray.origin = intersection_point;
-                ray.direction = random.random_hemisphere_direction(&normal);
+                ray.direction = if intersection.intersection_object.get_material().roughness <= 0.1 {
+                    ray.direction.reflect(&normal)
+                } else {
+                    random.random_hemisphere_direction(&normal)
+                };
 
                 // Calculate the incoming light
                 let emission_color = intersection
@@ -325,50 +329,6 @@ impl Renderer {
                     return incoming_light;
                 }
             }
-            // IntersectionObject::Sphere(intersection_sphere) => {
-            //     let sphere_intersection_point = intersection_sphere.intersection_point;
-            //     let sphere = intersection_sphere.intersection_object;
-
-            //     // Get the normal on the Sphere
-            //     let normal = sphere.calculate_normal(&sphere_intersection_point);
-
-            //     // Update the origin and direction of the ray for the next iteration
-            //     ray.origin = sphere_intersection_point;
-            //     ray.direction = random.random_hemisphere_direction(&normal);
-
-            //     // Calculate the incoming light
-            //     let emitted_light = sphere.get_material().emission_color * sphere.get_material().emission_power;
-            //     let emission = emitted_light * ray_color;
-            //     incoming_light += emission;
-
-            //     ray_color *= sphere.get_material().color;
-
-            //     if sphere.get_material().emission_power > 0.0 {
-            //         return incoming_light;
-            //     }
-            // }
-            // IntersectionObject::Cube(intersection_cube) => {
-            //     let cube_intersection_point = intersection_cube.intersection_point;
-            //     let cube = intersection_cube.intersection_object;
-
-            //     // Get the normal on the Cube
-            //     let normal = cube.calculate_normal(&cube_intersection_point);
-
-            //     // Update the origin and direction of the ray for the next iteration
-            //     ray.origin = cube_intersection_point;
-            //     ray.direction = random.random_hemisphere_direction(&normal);
-
-            //     // Calculate the incoming light
-            //     let emitted_light = cube.get_material().emission_color * cube.get_material().emission_power;
-            //     let emission = emitted_light * ray_color;
-            //     incoming_light += emission;
-
-            //     ray_color *= cube.get_material().color;
-
-            //     if cube.get_material().emission_power > 0.0 {
-            //         return incoming_light;
-            //     }
-            // }
             None => {
                 let background_color = ray.get_background_color();
                 return ray_color * background_color;

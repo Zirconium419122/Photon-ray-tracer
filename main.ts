@@ -26,8 +26,8 @@ async function run() {
 
 	// Add the light source
 	{
-		const sphereCenter = new wasm.Vector(-5, -5, -10);
-		const sphereRadius = 5;
+		const sphereCenter = new wasm.Vector(-10, -5, -10);
+		const sphereRadius = 4;
 		const sphereMaterial = new wasm.Material(
 			new wasm.Vector(0, 0, 0),
 			1,
@@ -45,8 +45,8 @@ async function run() {
 		const sphereCenter = new wasm.Vector(0, 0, -5);
 		const sphereRadius = 1;
 		const sphereMaterial = new wasm.Material(
-			new wasm.Vector(1, 0, 0),
-			1,
+			new wasm.Vector(0.8, 0.8, 0.8),
+			0,
 			new wasm.Vector(0, 0, 0),
 			0
 		);

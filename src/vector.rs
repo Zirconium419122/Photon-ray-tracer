@@ -54,6 +54,11 @@ impl Vector {
             z: self.z / mag,
         }
     }
+
+    // Method to calculate the reflected vector
+    pub fn reflect(&self, normal: &Vector) -> Vector {
+        *self - *normal * 2.0 * self.dot(normal)
+    }
 }
 
 // Method to add another vector
